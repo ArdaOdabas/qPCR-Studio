@@ -1,0 +1,1210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>qPCR Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f0ea; --grid:rgba(21,25,27,.04);
+  --surface:#fbfaf6; --surface2:#f1efe8; --surface3:#e5e2d9; --well:#fdfcf9; --plate:#e7e4da;
+  --border:#d9d4c8; --border2:#bcb6a7; --text:#15191b; --muted:#646a6c; --faint:#9d9c94;
+  --accent:#0a9396; --accent-ink:#06696c; --on-accent:#ffffff; --accent-soft:rgba(10,147,150,.09); --accent-ring:rgba(10,147,150,.26);
+  --ok:#2b7a4b; --ok-soft:rgba(43,122,75,.1); --warn:#9c6410; --warn-soft:rgba(196,132,29,.13);
+  --danger:#b4391c; --danger-soft:rgba(180,57,28,.09);
+  --shadow:0 1px 0 rgba(21,25,27,.04); --shadow-sm:0 1px 2px rgba(21,25,27,.1);
+  --pop:0 28px 70px -28px rgba(21,25,27,.4);
+  --paper-bg:#e6e2d8;
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1214; --grid:rgba(235,232,224,.028);
+    --surface:#151a1d; --surface2:#1a2024; --surface3:#232a2f; --well:#1b2125; --plate:#111518;
+    --border:#283035; --border2:#3b454c; --text:#ebe8e0; --muted:#959b9b; --faint:#5e676b;
+    --accent:#2bbfbb; --accent-ink:#86e3df; --on-accent:#05292a; --accent-soft:rgba(43,191,187,.12); --accent-ring:rgba(43,191,187,.34);
+    --ok:#62c98f; --ok-soft:rgba(98,201,143,.12); --warn:#e3ab4c; --warn-soft:rgba(227,171,76,.13);
+    --danger:#f0805f; --danger-soft:rgba(240,128,95,.12);
+    --shadow:none; --shadow-sm:0 1px 2px rgba(0,0,0,.5); --pop:0 30px 80px -24px rgba(0,0,0,.75);
+    --paper-bg:#0b0e10; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1214; --grid:rgba(235,232,224,.028);
+  --surface:#151a1d; --surface2:#1a2024; --surface3:#232a2f; --well:#1b2125; --plate:#111518;
+  --border:#283035; --border2:#3b454c; --text:#ebe8e0; --muted:#959b9b; --faint:#5e676b;
+  --accent:#2bbfbb; --accent-ink:#86e3df; --on-accent:#05292a; --accent-soft:rgba(43,191,187,.12); --accent-ring:rgba(43,191,187,.34);
+  --ok:#62c98f; --ok-soft:rgba(98,201,143,.12); --warn:#e3ab4c; --warn-soft:rgba(227,171,76,.13);
+  --danger:#f0805f; --danger-soft:rgba(240,128,95,.12);
+  --shadow:none; --shadow-sm:0 1px 2px rgba(0,0,0,.5); --pop:0 30px 80px -24px rgba(0,0,0,.75);
+  --paper-bg:#0b0e10; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);background-color:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;background-position:-1px -1px}
+button,input,select,textarea{font:inherit;color:inherit}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+::selection{background:var(--accent);color:var(--on-accent)}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:stretch;gap:28px;padding:0 28px;height:64px;background:var(--surface);border-bottom:1px solid var(--text)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;padding-right:28px;border-right:1px solid var(--border)}
+.logo{width:34px;height:34px;border-radius:3px;background:var(--accent);display:grid;place-items:center;flex:none;position:relative}
+.logo::after{content:"";position:absolute;inset:3px;border:1px solid rgba(255,255,255,.35);border-radius:1px}
+.brand b{display:block;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1;letter-spacing:-.01em}
+.brand b i{color:var(--accent)}
+.brand small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:3px;white-space:nowrap}
+.stepper{display:flex;align-items:stretch;gap:0;margin-right:auto}
+.step{position:relative;display:flex;align-items:center;gap:10px;padding:0 18px;font-size:13px;font-weight:500;color:var(--muted);border:0;background:none;cursor:pointer;white-space:nowrap;transition:color .15s}
+.step+.step::before{content:"";position:absolute;left:-10px;top:50%;width:20px;height:1px;background:var(--border2)}
+.step .n{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--faint);letter-spacing:.04em}
+.step::after{content:"";position:absolute;left:18px;right:18px;bottom:-1px;height:3px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.step:hover:not(:disabled){color:var(--text)}
+.step.active{color:var(--text);font-weight:600}
+.step.active .n{color:var(--accent)}
+.step.active::after{transform:scaleX(1)}
+.step.done .n{color:var(--ok)}
+.step:disabled{cursor:default;opacity:.45}
+.icon-btn{align-self:center;width:34px;height:34px;border-radius:3px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--muted);transition:all .15s}
+.icon-btn:hover{color:var(--text);border-color:var(--text)}
+
+main{max-width:1560px;margin:0 auto;padding:34px 28px 70px}
+.view{display:none}
+.view.on{display:block;animation:fadeUp .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+h1{font-family:var(--serif);font-weight:400;font-size:44px;line-height:1;letter-spacing:-.015em;margin:0}
+.sub{color:var(--muted);margin:8px 0 0;font-size:13.5px}
+h3{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin:0 0 14px;font-weight:500;display:flex;align-items:center;gap:10px}
+h3:not(:has(.pill))::after{content:"";flex:1;height:1px;background:var(--border)}
+h3 .num{color:var(--accent);font-weight:600}
+h3 .num::before{content:"§ "}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);padding:22px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;padding:0 15px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);font-weight:500;font-size:13px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;white-space:nowrap}
+.btn:hover{border-color:var(--text)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+.btn.primary:hover{background:var(--accent-ink);border-color:var(--accent-ink)}
+:root[data-theme="dark"] .btn.primary:hover{color:var(--on-accent)}
+.btn.lg{height:46px;padding:0 20px;font-size:14px}
+.btn.sm{height:30px;padding:0 11px;font-size:12.5px}
+.btn.danger{color:var(--danger)}
+.btn.danger:hover{background:var(--danger-soft);border-color:var(--danger)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.5;pointer-events:none}
+
+.seg{display:inline-flex;border:1px solid var(--border2);border-radius:3px;padding:2px;gap:2px;background:var(--surface)}
+.seg button{border:0;background:none;padding:5px 12px;border-radius:2px;font-size:12.5px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;white-space:nowrap}
+.seg button:hover{color:var(--text);background:var(--surface2)}
+.seg button.on{background:var(--text);color:var(--bg)}
+.seg.sm button{padding:4px 8px;font-size:12px}
+.seg.full{display:flex}.seg.full button{flex:1}
+
+.switch{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:13px;font-weight:500;user-select:none}
+.switch input{display:none}
+.switch span{width:32px;height:18px;border-radius:2px;background:var(--surface3);border:1px solid var(--border2);position:relative;transition:background .2s;flex:none}
+.switch span::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:1px;background:var(--surface);box-shadow:0 0 0 1px var(--border2);transition:transform .2s cubic-bezier(.3,1.3,.5,1)}
+.switch input:checked+span{background:var(--accent);border-color:var(--accent)}
+.switch input:checked+span::after{transform:translateX(14px);box-shadow:none}
+
+input[type=text],input[type=number],select,textarea{background:var(--surface);border:1px solid var(--border2);border-radius:3px;padding:8px 10px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%;font-size:13.5px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-ring)}
+input:disabled,select:disabled{opacity:.4}
+textarea{resize:vertical;min-height:54px}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23888' stroke-width='1.4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+input[type=color]{-webkit-appearance:none;appearance:none;width:28px;height:28px;border:1px solid var(--border2);border-radius:2px;padding:2px;background:var(--surface);cursor:pointer;flex:none}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+input[type=color]::-webkit-color-swatch{border:none;border-radius:1px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2px;background:var(--border2);border-radius:0;outline:none;padding:0;border:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:18px;border-radius:2px;background:var(--surface);border:1.5px solid var(--text);cursor:pointer}
+input[type=range]:hover::-webkit-slider-thumb{border-color:var(--accent);background:var(--accent)}
+input[type=range]:focus{box-shadow:none}
+input[type=checkbox].cb{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+
+/* ---------- upload / hero ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:56px;align-items:center;margin-top:18px}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:28px;height:1px;background:var(--accent)}
+.hero h1{font-size:68px;line-height:.98;letter-spacing:-.02em}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero p.lead{color:var(--muted);font-size:16px;max-width:480px;margin:20px 0 30px;line-height:1.55}
+.drop{display:block;position:relative;border:1px dashed var(--border2);border-radius:4px;padding:26px 26px 26px 92px;background:var(--surface);cursor:pointer;transition:border-color .2s,background .2s;max-width:540px}
+.drop:hover,.drop.over{border-color:var(--accent);border-style:solid;background:linear-gradient(var(--accent-soft),var(--accent-soft)),var(--surface)}
+.drop .ic{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:3px;display:grid;place-items:center;background:var(--text);color:var(--bg);transition:background .2s}
+.drop:hover .ic,.drop.over .ic{background:var(--accent)}
+.drop b{font-size:15px;font-weight:600;display:block;margin-bottom:4px}
+.drop span{display:block;color:var(--muted);font-size:12px;font-family:var(--mono)}
+.hero-art{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:20px 20px 14px}
+.hero-art .cap{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.hero-art svg{display:block;width:100%;height:auto}
+.hero-art .curve{fill:none;stroke-width:2;stroke-dasharray:900;stroke-dashoffset:900;animation:draw 1.8s cubic-bezier(.4,0,.2,1) forwards}
+.protocol{list-style:none;padding:0;margin:56px 0 0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--text)}
+.protocol li{padding:18px 26px 0 0}
+.protocol li+li{padding-left:26px;border-left:1px solid var(--border)}
+.protocol .no{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em}
+.protocol b{display:block;font-family:var(--serif);font-weight:400;font-size:24px;margin:6px 0 6px}
+.protocol p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+
+/* ---------- plate ---------- */
+.toolbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tool{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tool .seg,.tool input{font-family:var(--sans);letter-spacing:0;text-transform:none}
+.plate-wrap{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:22px;align-items:start}
+.plate-card{padding:20px}
+.hint{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:16px}
+.hint kbd{font-family:var(--mono);font-size:10.5px;font-weight:500;background:var(--surface2);border:1px solid var(--border2);border-bottom-width:2px;border-radius:2px;padding:0 5px;color:var(--text)}
+.plate-scroll{overflow-x:auto;padding:2px}
+.plate-body{min-width:760px;background:var(--border2);padding:1.5px;clip-path:polygon(26px 0,100% 0,100% 100%,0 100%,0 26px);border-radius:0 12px 12px 12px}
+.plate{--gap:7px;display:grid;gap:var(--gap);user-select:none;background:var(--plate);padding:14px 18px 18px 10px;clip-path:polygon(25px 0,100% 0,100% 100%,0 100%,0 25px);border-radius:0 11px 11px 11px;
+  background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,.035) 1px,transparent 1.5px);background-size:6px 6px}
+.plate .hdr{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);display:grid;place-items:center}
+.well{position:relative;aspect-ratio:1;border-radius:50%;background:var(--well);border:1.5px solid var(--border2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s,border-color .15s,box-shadow .15s;min-width:0;padding:4px;box-shadow:inset 0 2px 4px rgba(0,0,0,.09)}
+.well:hover{border-color:var(--text)}
+.well .wid{display:none}
+.well .cp{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:-.03em;line-height:1.1}
+.well .lab{font-size:9px;font-weight:600;font-style:italic;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.15;margin-top:2px}
+.well .lab2{font-size:8.5px;color:var(--muted);max-width:78%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.15}
+.well.heat{background:color-mix(in srgb,var(--heat) 17%,var(--well))}
+.well.as{background:color-mix(in srgb,var(--sc) 22%,var(--well));border:2px solid var(--sc);box-shadow:inset 0 2px 4px rgba(0,0,0,.06)}
+.well.as .lab{color:color-mix(in srgb,var(--sc) 60%,var(--text))}
+.well.hk .lab::before{content:"★ ";font-style:normal;color:var(--warn)}
+.well.jr::after{content:"";position:absolute;right:calc(-1 * var(--gap) - 3px);top:calc(50% - 1.5px);width:calc(var(--gap) + 4px);height:3px;background:var(--sc);z-index:1}
+.well.jd::before{content:"";position:absolute;bottom:calc(-1 * var(--gap) - 3px);left:calc(50% - 1.5px);height:calc(var(--gap) + 4px);width:3px;background:var(--sc);z-index:1}
+.well.cand{border:2px solid var(--accent);background:var(--accent-soft);box-shadow:0 0 0 4px var(--accent-ring);z-index:2}
+.well.cand .cp{color:var(--accent-ink)}
+.well.cand.bad{border-color:var(--danger);background:var(--danger-soft);box-shadow:0 0 0 4px var(--danger-soft)}
+.well.ghl{box-shadow:0 0 0 4px color-mix(in srgb,var(--sc) 35%,transparent);z-index:2}
+.well.csel{border:2px dashed var(--accent);box-shadow:0 0 0 4px var(--accent-ring)}
+.well.ex{background:repeating-linear-gradient(45deg,var(--well) 0 4px,var(--surface3) 4px 5.5px);opacity:.75}
+.well.ex .cp{text-decoration:line-through;color:var(--muted)}
+.well.empty{opacity:.35;cursor:default;border-style:dashed;box-shadow:none}
+.heatlegend{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:14px;justify-content:flex-end}
+.heatlegend .bar{width:160px;height:6px;border-radius:0;background:linear-gradient(90deg,hsl(178 62% 38%),hsl(110 30% 55%),hsl(40 75% 58%))}
+
+.side{position:sticky;top:88px;display:flex;flex-direction:column;max-height:calc(100vh - 112px);padding:20px}
+.side-scroll{overflow:auto;flex:1;margin:0 -6px;padding:0 6px}
+.progress{height:3px;background:var(--surface3);overflow:hidden;margin:2px 0 8px}
+.progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.pmeta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:22px}
+.gene-row{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px solid var(--border)}
+.gene-row .gname{font-weight:600;font-style:italic;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.star{border:0;background:none;cursor:pointer;font-size:15px;color:var(--faint);padding:0 2px;line-height:1;transition:transform .15s,color .15s}
+.star:hover{transform:scale(1.2);color:var(--warn)}
+.star.on{color:var(--warn)}
+.pill{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.04em;padding:2px 7px;border-radius:2px;border:1px solid var(--border2);color:var(--muted);white-space:nowrap;text-transform:none}
+.pill.ref{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.pill.acc{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+:root[data-theme="dark"] .pill.acc{color:var(--accent)}
+.pill.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+.pill.bad{border-color:var(--danger);color:var(--danger);background:var(--danger-soft)}
+.sgrp{margin-bottom:14px}
+.sname{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;margin-bottom:4px}
+.sname i,.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.sname span{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--muted);font-weight:400}
+.gitem{display:grid;grid-template-columns:1fr auto auto 22px;align-items:center;gap:8px;padding:5px 6px 5px 17px;border-radius:2px;font-size:12.5px;cursor:pointer;transition:background .12s;border-left:1px solid var(--border);margin-left:4px}
+.gitem:hover{background:var(--surface2)}
+.gitem .g{font-weight:500;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gitem .w{font-size:10.5px;color:var(--muted)}
+.gitem .v{font-size:11px}
+.gitem .v.warn{color:var(--warn)}
+.x{border:0;background:none;color:var(--faint);cursor:pointer;width:22px;height:22px;border-radius:2px;display:grid;place-items:center;font-size:15px}
+.x:hover{background:var(--danger-soft);color:var(--danger)}
+.empty-s{border:1px dashed var(--border2);border-radius:3px;padding:16px;text-align:center;color:var(--muted);font-size:12.5px}
+.side-foot{padding-top:16px;border-top:1px solid var(--border);margin-top:10px}
+.side-foot .btn{background:var(--text);color:var(--bg);border-color:var(--text);justify-content:space-between}
+.side-foot .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.selbar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(120px);background:var(--text);color:var(--bg);border-radius:3px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:12px;z-index:40;transition:transform .3s cubic-bezier(.2,.9,.3,1.1);font-size:13px;box-shadow:var(--pop)}
+.selbar .btn{background:transparent;color:var(--bg);border-color:rgba(255,255,255,.3)}
+.selbar .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.selbar.on{transform:translateX(-50%) translateY(0)}
+
+/* ---------- modal ---------- */
+.modal-bg{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:grid;place-items:center;z-index:100;animation:fade .2s;padding:16px}
+.modal{width:min(540px,100%);max-height:calc(100vh - 32px);overflow:auto;background:var(--surface);border:1px solid var(--text);border-radius:4px;box-shadow:var(--pop);padding:0 26px 24px;animation:pop .28s cubic-bezier(.2,.8,.2,1)}
+.modal.shake{animation:shake .35s}
+.m-head{display:flex;gap:14px;align-items:center;margin:0 -26px 20px;padding:18px 26px;border-bottom:1px solid var(--border)}
+.m-ic{width:38px;height:38px;border-radius:3px;flex:none;display:grid;place-items:center;background:var(--accent);color:var(--on-accent)}
+.m-ic svg{stroke:currentColor}
+.m-ic svg [fill="#fff"]{fill:currentColor}
+.m-head h2{margin:0;font-family:var(--serif);font-weight:400;font-size:26px;line-height:1}
+.m-head p{margin:5px 0 0;color:var(--muted);font-family:var(--mono);font-size:11px}
+.field{display:block;margin-bottom:10px}
+.field>span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:-2px 0 16px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:var(--surface);border-radius:2px;padding:3px 9px;font-size:12px;font-weight:500;cursor:pointer;transition:all .12s}
+.chip:hover{border-color:var(--text)}
+.chip i{width:7px;height:7px;border-radius:50%}
+.chip.on{background:var(--text);border-color:var(--text);color:var(--bg)}
+.wchips{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;padding:14px;border-radius:3px;background:var(--plate);border:1px solid var(--border)}
+.wchip{width:58px;height:58px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--well);border:2px solid var(--accent);box-shadow:inset 0 2px 4px rgba(0,0,0,.08)}
+.wchip b{font-family:var(--mono);font-size:9.5px;font-weight:500;color:var(--muted)}
+.wchip span{font-family:var(--mono);font-weight:500;font-size:12.5px}
+.wchip.ex{opacity:.45;text-decoration:line-through;border-color:var(--border2)}
+.wstat{margin-left:auto;display:grid;grid-template-columns:auto auto;gap:3px 14px;align-items:baseline;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.wstat b{font-family:var(--serif);font-weight:400;color:var(--text);font-size:22px;text-align:right;letter-spacing:0;text-transform:none}
+.wstat b.warn{color:var(--warn)}
+.check{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:3px;border:1px solid var(--border2);cursor:pointer;font-size:13px;margin-bottom:6px}
+.check:has(input:checked){border-color:var(--warn);background:var(--warn-soft)}
+.check input{width:15px;height:15px;accent-color:var(--warn)}
+.m-foot{display:flex;gap:10px;align-items:center;margin:22px -26px -24px;padding:14px 26px;border-top:1px solid var(--border);background:var(--surface2)}
+.grow{flex:1}
+.repopts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.repopt{border:1px solid var(--border2);border-radius:3px;padding:20px 14px 16px;text-align:center;cursor:pointer;background:var(--surface);transition:all .15s;position:relative}
+.repopt:hover{border-color:var(--text)}
+.repopt.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.repopt.on::after{content:"✓";position:absolute;top:8px;right:10px;font-size:12px;color:var(--accent);font-weight:700}
+.repopt .dots{display:flex;gap:5px;justify-content:center;margin-bottom:12px}
+.repopt .dots i{width:24px;height:24px;border-radius:50%;background:var(--well);border:2px solid var(--border2);box-shadow:inset 0 2px 3px rgba(0,0,0,.1)}
+.repopt.on .dots i{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 22%,var(--well))}
+.repopt b{display:block;font-family:var(--serif);font-weight:400;font-size:22px}
+.repopt span{font-family:var(--mono);font-size:11px;color:var(--muted)}
+
+/* ---------- analysis ---------- */
+.agrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:span 12}.c6{grid-column:span 6}
+.desc{color:var(--muted);font-size:12.5px;margin:-4px 0 14px;line-height:1.55}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500;padding:9px 12px;border-bottom:1px solid var(--text);white-space:nowrap;background:var(--surface)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:var(--surface2)}
+.tbl td.num,.tbl th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.5px}
+.tbl .muted{color:var(--muted)}
+.tbl select{padding:5px 26px 5px 9px;font-size:12.5px;width:auto;min-width:140px}
+.updown{display:inline-flex;flex-direction:column;gap:1px}
+.updown button{border:0;background:none;color:var(--faint);cursor:pointer;font-size:8px;line-height:1;padding:2px 4px;border-radius:2px}
+.updown button:hover{color:var(--accent);background:var(--accent-soft)}
+.tchips{display:flex;flex-wrap:wrap;gap:8px}
+.tchip{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);cursor:pointer;font-weight:500;font-size:13px;transition:all .15s;user-select:none}
+.tchip em{font-style:italic;font-weight:600}
+.tchip:hover{border-color:var(--text)}
+.tchip.on{border-color:var(--accent);background:var(--accent-soft)}
+.tchip.on.ref{border-color:var(--warn);background:var(--warn-soft)}
+.tchip .tick{width:14px;height:14px;border-radius:2px;border:1px solid var(--border2);display:grid;place-items:center;font-size:9px;color:transparent}
+.tchip.on .tick{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.tchip.on.ref .tick{background:var(--warn);border-color:var(--warn);color:#fff}
+.bigseg{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:16px;border:1px solid var(--border2);border-radius:3px;overflow:hidden}
+.bigseg button{border:0;background:var(--surface);padding:13px 16px;text-align:left;cursor:pointer;transition:all .15s;position:relative}
+.bigseg button+button{border-left:1px solid var(--border2)}
+.bigseg button b{display:block;font-family:var(--serif);font-weight:400;font-size:20px;line-height:1.1;margin-bottom:2px}
+.bigseg button span{font-size:12px;color:var(--muted)}
+.bigseg button:hover{background:var(--surface2)}
+.bigseg button.on{background:var(--text);color:var(--bg)}
+.bigseg button.on span{color:color-mix(in srgb,var(--bg) 70%,transparent)}
+.foot-actions{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.notice{display:flex;gap:10px;align-items:flex-start;padding:10px 13px;border-radius:3px;font-size:12.5px;margin-top:10px;border-left:3px solid currentColor}
+.notice.warn{background:var(--warn-soft);color:var(--warn)}
+.notice.err{background:var(--danger-soft);color:var(--danger)}
+.notice.info{background:var(--accent-soft);color:var(--accent-ink)}
+:root[data-theme="dark"] .notice.info{color:var(--accent)}
+.formula{font-family:var(--mono);font-size:11.5px;background:var(--plate);border:1px solid var(--border);border-radius:3px;padding:12px 14px;color:var(--text);line-height:1.8}
+
+/* ---------- results ---------- */
+.tabs{display:inline-flex;gap:0;border-bottom:1px solid var(--border2)}
+.tabs button{border:0;background:none;padding:7px 16px;font-weight:500;font-size:13px;color:var(--muted);cursor:pointer;position:relative}
+.tabs button.on{color:var(--text);font-weight:600}
+.tabs button.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent)}
+.glayout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.canvas{padding:0;overflow:hidden;display:flex;flex-direction:column}
+.canvas-tools{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.canvas-tools .sub{font-family:var(--mono);font-size:10.5px!important}
+.paper{background-color:var(--paper-bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:14px 14px;min-height:560px;display:grid;place-items:center;padding:40px;overflow:auto}
+.paper svg{background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1),0 20px 40px -20px rgba(0,0,0,.3);display:block}
+.paper.transp svg{background-color:#fff;background-image:linear-gradient(45deg,#eee 25%,transparent 25%),linear-gradient(-45deg,#eee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eee 75%),linear-gradient(-45deg,transparent 75%,#eee 75%);background-size:14px 14px;background-position:0 0,0 7px,7px -7px,-7px 0}
+.paper [data-edit]{cursor:pointer}
+.paper [data-edit]:hover{opacity:.75}
+.inspector{padding:0;position:sticky;top:88px;max-height:calc(100vh - 112px);overflow:auto}
+.sec{border-bottom:1px solid var(--border)}
+.sec:last-child{border-bottom:0}
+.sec summary{list-style:none;display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;user-select:none;color:var(--muted);position:sticky;top:0;background:var(--surface);z-index:1}
+.sec[open] summary{color:var(--text)}
+.sec summary::-webkit-details-marker{display:none}
+.sec summary:hover{color:var(--text)}
+.sec summary .si{width:22px;height:22px;border-radius:2px;border:1px solid var(--border2);color:var(--accent);display:grid;place-items:center;font-size:11px;letter-spacing:0;text-transform:none;font-family:var(--sans)}
+.sec[open] summary .si{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.sec summary::after{content:"+";margin-left:auto;font-size:15px;color:var(--faint);letter-spacing:0}
+.sec[open] summary::after{content:"−"}
+.sec .body{padding:4px 16px 16px}
+.ctl{display:grid;grid-template-columns:112px minmax(0,1fr);align-items:center;gap:10px;margin-bottom:9px;font-size:12.5px;border-radius:2px}
+.ctl>label{color:var(--muted)}
+.ctl.stack{grid-template-columns:1fr}
+.ctl.stack>label{margin-bottom:-4px}
+.rng{display:grid;grid-template-columns:1fr 58px;gap:10px;align-items:center}
+.rng input[type=number]{padding:4px 6px;font-size:12px;text-align:right;font-family:var(--mono)}
+.ctl input[type=text],.ctl input[type=number],.ctl select,.ctl textarea{padding:5px 8px;font-size:12.5px}
+.ctl select{padding-right:26px}
+.colr{display:flex;gap:8px;align-items:center}
+.colr code{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.ser-row{display:grid;grid-template-columns:28px minmax(0,1fr) 96px;gap:9px;align-items:center;margin-bottom:6px;padding:3px;border-radius:2px;transition:background .3s}
+.ser-row.flash{background:var(--accent-soft)}
+.ser-row .sn{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ser-row select{padding:4px 24px 4px 8px;font-size:12px}
+.palrow{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:10px}
+.swatches{display:flex;gap:0;margin:0 0 14px;border:1px solid var(--border)}
+.swatches i{flex:1;height:10px}
+.ctl-flash{animation:flashc 1s}
+@keyframes flashc{0%,60%{background:var(--accent-soft)}100%{background:transparent}}
+.tcard{margin-bottom:20px;padding:0;overflow:hidden}
+.tcard .th{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tcard .th h4{margin:0;font-family:var(--serif);font-weight:400;font-size:24px;line-height:1}
+.tcard .th p{margin:5px 0 0;font-size:12px;color:var(--muted)}
+.tscroll{overflow-x:auto}
+.warnlist{margin:0 0 18px}
+.flag{color:var(--warn);font-weight:600}
+
+#toast{position:fixed;top:78px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--text);color:var(--bg);padding:9px 15px;border-radius:3px;font-size:13px;font-weight:500;box-shadow:var(--pop);animation:pop .25s;max-width:90vw;border-left:3px solid var(--accent)}
+.toast.err{border-left-color:var(--danger)}
+.toast.ok{border-left-color:var(--ok)}
+
+@media (max-width:1180px){
+  .plate-wrap,.glayout,.hero{grid-template-columns:1fr}
+  .side,.inspector{position:static;max-height:none}
+  .c4,.c5,.c7,.c8,.c6{grid-column:span 12}
+}
+@media (max-width:760px){
+  main{padding:20px 16px 50px}
+  .topbar{padding:0 16px;gap:10px;height:auto;flex-wrap:wrap}
+  .brand{border-right:0;padding:10px 0}
+  .stepper{order:3;width:100%;overflow-x:auto;margin:0}
+  .step{padding:12px 10px}
+  .step .t{display:none}
+  .brand small{display:none}
+  .hero h1{font-size:44px}
+  .protocol,.repopts,.bigseg{grid-template-columns:1fr}
+  .protocol li+li{padding-left:0;border-left:0;border-top:1px solid var(--border)}
+  .paper{padding:16px;min-height:360px}
+  h1{font-size:34px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M2.5 19.5h4c3 0 3.6-2.2 5-7.2S14.6 5 17.5 4.7h4"/><path d="M2.5 12h19" stroke-dasharray="1.5 2.5" opacity=".7"/><circle cx="11.6" cy="12" r="1.7" fill="#fff" stroke="none"/></svg></div>
+    <div><b>qPCR <i>Studio</i></b><small>ΔΔCt · LightCycler 480</small></div>
+  </div>
+  <nav class="stepper" id="stepper"></nav>
+  <button class="icon-btn" id="themeBtn" title="Toggle light / dark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg></button>
+</header>
+
+<main>
+<!-- STEP 0: upload -->
+<section class="view on" id="v0">
+  <div class="hero">
+    <div class="hero-copy">
+      <div class="kicker">Real‑time PCR · relative quantification</div>
+      <h1>From raw <em>Cp</em> values<br>to figures worth<br>publishing.</h1>
+      <p class="lead">Load the LightCycler 480 export, mark your replicate wells on the plate, choose a calibrator — and get ΔCt, ΔΔCt and fold change with fully editable, journal‑ready graphs.</p>
+      <label class="drop" id="drop">
+        <input type="file" id="fileIn" accept=".txt,.tsv,.csv,text/plain" hidden>
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v4.5h16V15"/></svg></div>
+        <b>Drop the result .txt here, or click to browse</b>
+        <span>Abs Quant / 2nd Derivative Max · columns Pos · Name · Cp</span>
+      </label>
+    </div>
+    <figure class="hero-art" style="margin:0">
+      <div class="cap"><span>Fig. 0 — Amplification</span><span>SYBR Green I · 465–510</span></div>
+      <svg id="heroArt" viewBox="0 0 520 340"></svg>
+    </figure>
+  </div>
+  <ol class="protocol">
+    <li><span class="no">01 — PLATE</span><b>Map the wells</b><p>Drag across 2 or 3 wells to define a replicate set, then name the sample and gene. Outliers are one right‑click away.</p></li>
+    <li><span class="no">02 — NORMALIZE</span><b>Match references</b><p>Housekeeping genes are paired with targets by sample name. Normalize to one calibrator or to several.</p></li>
+    <li><span class="no">03 — PUBLISH</span><b>Export figures</b><p>ΔCt, ΔΔCt and fold change ± min/max as tables, plus bar graphs you can restyle down to the stroke width.</p></li>
+  </ol>
+</section>
+
+<!-- STEP 1: plate -->
+<section class="view" id="v1">
+  <div class="page-head">
+    <div><h1>Plate map</h1><p class="sub" id="plateSub"></p></div>
+    <div class="toolbar">
+      <div class="tool">Replicates <div class="seg" id="segRep"><button data-v="2">2 wells</button><button data-v="3">3 wells</button></div></div>
+      <div class="tool">Direction <div class="seg" id="segOri"><button data-v="h">→ Along row</button><button data-v="v">↓ Down column</button></div></div>
+      <label class="switch"><input type="checkbox" id="heatTgl" checked><span></span>Cp heatmap</label>
+      <button class="btn sm" id="saveLayout" title="Download the plate layout as JSON to reuse later">Save layout</button>
+      <button class="btn sm" id="loadLayout">Load layout</button>
+      <input type="file" id="layoutIn" accept=".json" hidden>
+      <button class="btn sm danger" id="clearAll">Clear</button>
+    </div>
+  </div>
+  <div class="plate-wrap">
+    <div class="card plate-card">
+      <div class="hint">
+        <span><kbd>Drag</kbd> across wells to pick a set (e.g. B2 → D2)</span>
+        <span>or <kbd>Click</kbd> = hovered well + next wells in the chosen direction</span>
+        <span><kbd>Click</kbd> an assigned well to edit</span>
+        <span><kbd>Right‑click</kbd> a well to exclude an outlier</span>
+        <span><kbd>⇧ Shift</kbd>+click for a custom (non‑adjacent) set</span>
+      </div>
+      <div class="plate-scroll"><div class="plate-body"><div class="plate" id="plate"></div></div></div>
+      <div class="heatlegend" id="heatLegend"><span>low Cp (high expr.)</span><div class="bar"></div><span>high Cp</span></div>
+    </div>
+    <aside class="card side">
+      <h3>Progress</h3>
+      <div class="progress"><i id="progBar" style="width:0"></i></div>
+      <div class="pmeta"><span id="progTxt"></span><span id="progGrp"></span></div>
+      <div class="side-scroll">
+        <h3>Genes <span class="pill" style="margin-left:auto;text-transform:none;letter-spacing:0">★ = housekeeping</span></h3>
+        <div id="geneList"></div>
+        <h3 style="margin-top:18px">Groups by sample</h3>
+        <div id="groupList"></div>
+      </div>
+      <div class="side-foot">
+        <button class="btn primary lg block" id="doneBtn">Done picking groups <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+    </aside>
+  </div>
+  <div class="selbar" id="selbar"><span id="selTxt"></span><button class="btn sm" id="selClear">Clear</button><button class="btn sm primary" id="selAssign">Assign set</button></div>
+</section>
+
+<!-- STEP 2: analysis -->
+<section class="view" id="v2">
+  <div class="page-head">
+    <div><h1>Analysis setup</h1><p class="sub">Choose reference genes, calibrator(s), samples and targets.</p></div>
+  </div>
+  <div id="analysisBody"></div>
+</section>
+
+<!-- STEP 3: results -->
+<section class="view" id="v3">
+  <div class="page-head">
+    <div><h1>Results</h1><p class="sub" id="resSub"></p></div>
+    <div class="toolbar">
+      <div class="tabs" id="resTabs"><button data-t="graph" class="on">Graph</button><button data-t="tables">Tables</button></div>
+      <button class="btn sm" id="backAnalysis">← Analysis settings</button>
+    </div>
+  </div>
+  <div id="resWarn"></div>
+  <div id="tabGraph">
+    <div class="glayout">
+      <div class="card canvas">
+        <div class="canvas-tools">
+          <div class="tool">Zoom <input type="range" id="zoom" min="50" max="250" value="125" style="width:120px"> <span id="zoomTxt" class="mono" style="width:40px">125%</span></div>
+          <span class="grow"></span>
+          <span class="sub" style="margin:0;font-size:12px">Tip: click any text or bar in the figure to jump to its settings</span>
+          <button class="btn sm" id="dlSvg">SVG</button>
+          <button class="btn sm primary" id="dlPng">Download PNG</button>
+        </div>
+        <div class="paper" id="chartHost"></div>
+      </div>
+      <aside class="card inspector" id="inspector"></aside>
+    </div>
+  </div>
+  <div id="tabTables" style="display:none"></div>
+</section>
+</main>
+
+<div id="modalRoot"></div>
+<div id="toast"></div>
+
+<script>
+/* ====================== helpers ====================== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ROWS='ABCDEFGHIJKLMNOP';
+const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const sdev=a=>{if(a.length<2)return 0;const m=avg(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1))};
+const f2=v=>isFinite(v)?v.toFixed(2):'—', f3=v=>isFinite(v)?v.toFixed(3):'—', f4=v=>isFinite(v)?v.toFixed(4):'—';
+const uniq=a=>[...new Set(a)];
+const ls={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+function toast(msg,type=''){const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity=0;setTimeout(()=>t.remove(),300)},2600)}
+const NATIVE=window.webkit&&window.webkit.messageHandlers&&window.webkit.messageHandlers.saveFile?window.webkit.messageHandlers:null;
+async function blob64(b){const u=new Uint8Array(await b.arrayBuffer());let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)}
+async function copyTextAny(t){if(NATIVE){NATIVE.copyText.postMessage({text:t});return}await navigator.clipboard.writeText(t)}
+async function download(name,data,type){const b=data instanceof Blob?data:new Blob([data],{type});
+  if(NATIVE){NATIVE.saveFile.postMessage({name,data:await blob64(b)});return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+const SAMPLE_COLORS=['#3d5a80','#e07a5f','#0a9396','#e9b44c','#81b29a','#9c6644','#6d597a','#d16a8c','#2f6f4f','#bc4749','#577590','#f4a261','#5f0f40','#7a8b99'];
+const HK_RE=/^(GAPDH|ACTB|B2M|HPRT1?|TBP|RPLP0|18S|RN18S1?|PPIA|YWHAZ|UBC|GUSB|HMBS|SDHA|RPL13A|TUBB|TUBA1A|PGK1|EEF1A1|RPS18|Gapdh|Actb)$/i;
+
+/* ====================== state ====================== */
+const S={file:null,wells:{},nRows:8,nCols:12,rep:3,orient:'h',groups:[],genes:{},gid:0,heat:true,customSel:[],last:{sample:'',gene:''},step:0,maxStep:0,A:null,R:null,cfg:null,zoom:1.25};
+
+/* ====================== theme / stepper ====================== */
+(function(){const t=ls.get('qs.theme');if(t)document.documentElement.dataset.theme=t})();
+$('#themeBtn').onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const n=cur==='dark'?'light':'dark';document.documentElement.dataset.theme=n;ls.set('qs.theme',n)};
+const STEPS=['Upload','Plate map','Analysis','Results'];
+function renderStepper(){$('#stepper').innerHTML=STEPS.map((s,i)=>`<button class="step ${i===S.step?'active':''} ${i<S.maxStep&&i!==S.step?'done':''}" data-i="${i}" ${i>S.maxStep?'disabled':''}><span class="n">${i<S.maxStep&&i!==S.step?'✓ ':''}0${i+1}</span><span class="t">${s}</span></button>`).join('')}
+$('#stepper').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;const i=+b.dataset.i;if(i===3&&!S.R)return;if(i===2&&!S.A)initAnalysis();setStep(i)};
+function setStep(i){S.step=i;S.maxStep=Math.max(S.maxStep,i);$$('.view').forEach((v,k)=>v.classList.toggle('on',k===i));renderStepper();window.scrollTo({top:0,behavior:'smooth'});
+  if(i===1)renderPlate(); if(i===2)renderAnalysis(); if(i===3)renderResults();}
+renderStepper();
+(function heroArt(){const W=520,H=340,L=46,B=300,T=16,R=506;const x=c=>L+(c/45)*(R-L),y=f=>B-f*(B-T);
+  let g='';for(let c=0;c<=45;c+=5){g+=`<line x1="${x(c)}" x2="${x(c)}" y1="${T}" y2="${B}" stroke="var(--border)" stroke-width="1"/><text x="${x(c)}" y="${B+18}" font-size="10" font-family="IBM Plex Mono,monospace" fill="var(--muted)" text-anchor="middle">${c}</text>`}
+  for(let k=0;k<=4;k++)g+=`<line x1="${L}" x2="${R}" y1="${y(k/4)}" y2="${y(k/4)}" stroke="var(--border)"/>`;
+  const thr=.16;g+=`<line x1="${L}" x2="${R}" y1="${y(thr)}" y2="${y(thr)}" stroke="var(--text)" stroke-dasharray="4 4" stroke-width="1"/><text x="${R-4}" y="${y(thr)-6}" font-size="10" font-family="IBM Plex Mono,monospace" fill="var(--text)" text-anchor="end">threshold</text>`;
+  const cs=[[19.2,.95],[20.6,.9],[27.8,.82],[31.6,.7],[33.4,.62]];
+  cs.forEach(([c0,A],i)=>{const k=1.55;let d='';for(let c=0;c<=45;c+=.5){const f=.02+A/(1+Math.exp(-(c-c0)/k));d+=(c?'L':'M')+x(c).toFixed(1)+' '+y(f).toFixed(1)}
+    const col=i<2?'var(--accent)':i<4?'var(--text)':'var(--warn)';
+    const cp=c0-k*Math.log(A/(thr-.02)-1);
+    g+=`<path class="curve" d="${d}" stroke="${col}" style="animation-delay:${i*.15}s"/><circle cx="${x(cp)}" cy="${y(thr)}" r="3.5" fill="var(--surface)" stroke="${col}" stroke-width="1.5" opacity="0" style="animation:fade .4s ${1.4+i*.15}s forwards"/>`;
+    if(i===0||i===3)g+=`<text x="${x(cp)-6}" y="${y(thr)+16}" font-size="10" font-family="IBM Plex Mono,monospace" fill="${col}" text-anchor="end" opacity="0" style="animation:fade .4s ${1.6+i*.15}s forwards">Cp ${cp.toFixed(2)}</text>`});
+  g+=`<line x1="${L}" x2="${L}" y1="${T}" y2="${B}" stroke="var(--text)" stroke-width="1.5"/><line x1="${L}" x2="${R}" y1="${B}" y2="${B}" stroke="var(--text)" stroke-width="1.5"/>`;
+  g+=`<text x="${(L+R)/2}" y="${H-2}" font-size="10" font-family="IBM Plex Mono,monospace" fill="var(--muted)" text-anchor="middle" letter-spacing="1.5">CYCLE</text><text transform="rotate(-90 14 ${(T+B)/2})" x="14" y="${(T+B)/2}" font-size="10" font-family="IBM Plex Mono,monospace" fill="var(--muted)" text-anchor="middle" letter-spacing="1.5">FLUORESCENCE</text>`;
+  $('#heroArt').innerHTML=g})();
+
+/* ====================== parsing ====================== */
+function parseLC(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim().length);
+  const hi=lines.findIndex(l=>/(^|\t)\s*pos\s*(\t|$)/i.test(l)&&/(^|\t)\s*(cp|ct|cq)\s*(\t|$)/i.test(l));
+  if(hi<0)throw new Error('Header row with “Pos” and “Cp” columns not found.');
+  let exp='',filter='';
+  for(let i=0;i<hi;i++){const m=lines[i].match(/Experiment:\s*(.*?)(?:\s{2,}|\t|$)/i);if(m)exp=m[1].trim();const f=lines[i].match(/Selected Filter:\s*(.*)$/i);if(f)filter=f[1].trim()}
+  const head=lines[hi].split('\t').map(s=>s.trim().toLowerCase());
+  const iPos=head.indexOf('pos'),iName=head.indexOf('name'),iInc=head.indexOf('include');
+  const iCp=head.findIndex(h=>h==='cp'||h==='ct'||h==='cq');
+  const wells={};let maxR=0,maxC=0;
+  for(let i=hi+1;i<lines.length;i++){
+    const c=lines[i].split('\t');const pos=(c[iPos]||'').trim().toUpperCase();
+    const m=pos.match(/^([A-P])(\d{1,2})$/);if(!m)continue;
+    const r=ROWS.indexOf(m[1]),col=+m[2]-1;
+    const raw=(c[iCp]||'').trim().replace(',','.');const cp=raw===''?NaN:parseFloat(raw);
+    const inc=iInc<0||!/^false$/i.test((c[iInc]||'').trim());
+    const key=m[1]+(col+1);
+    wells[key]={pos:key,r,c:col,name:iName>=0?(c[iName]||'').trim():'',cp,excluded:!inc};
+    maxR=Math.max(maxR,r);maxC=Math.max(maxC,col);
+  }
+  if(!Object.keys(wells).length)throw new Error('No wells could be read from this file.');
+  const big=maxR>7||maxC>11;
+  return {exp,filter,wells,nRows:big?16:8,nCols:big?24:12};
+}
+
+/* ====================== upload ====================== */
+const drop=$('#drop');
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
+$('#fileIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f);e.target.value=''});
+async function loadFile(f){
+  try{const txt=await f.text();loadText(txt,f.name)}catch(err){toast(err.message,'err')}
+}
+function loadText(txt,name){
+  const P=parseLC(txt);
+  Object.assign(S,{file:{name,exp:P.exp,filter:P.filter},wells:P.wells,nRows:P.nRows,nCols:P.nCols,groups:[],genes:{},customSel:[],A:null,R:null,maxStep:0});
+  askReplicates();
+}
+function askReplicates(){
+  let rep=S.rep,ori=S.orient;
+  const n=Object.keys(S.wells).length;
+  modal(`<div class="m-head"><div class="m-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></div>
+    <div><h2>${esc(S.file.exp||S.file.name)}</h2><p>${n} wells loaded · ${esc(S.file.filter||'LightCycler 480')}</p></div></div>
+    <div class="field"><span>How many technical replicates per sample?</span></div>
+    <div class="repopts" id="repOpts">
+      <div class="repopt" data-v="2"><div class="dots"><i></i><i></i></div><b>Duplicates</b><span>2 wells per set</span></div>
+      <div class="repopt" data-v="3"><div class="dots"><i></i><i></i><i></i></div><b>Triplicates</b><span>3 wells per set</span></div>
+    </div>
+    <div class="field"><span>Replicates are laid out…</span></div>
+    <div class="seg full" id="oriOpts"><button data-v="h">→ Along a row (A1, A2, A3)</button><button data-v="v">↓ Down a column (A1, B1, C1)</button></div>
+    <div class="m-foot"><button class="btn ghost" data-close>Cancel</button><span class="grow"></span><button class="btn primary" id="repGo">Continue to plate map →</button></div>`);
+  const sync=()=>{$$('#repOpts .repopt').forEach(b=>b.classList.toggle('on',+b.dataset.v===rep));$$('#oriOpts button').forEach(b=>b.classList.toggle('on',b.dataset.v===ori))};
+  sync();
+  $('#repOpts').onclick=e=>{const b=e.target.closest('.repopt');if(b){rep=+b.dataset.v;sync()}};
+  $('#oriOpts').onclick=e=>{const b=e.target.closest('button');if(b){ori=b.dataset.v;sync()}};
+  $('#repGo').onclick=()=>{S.rep=rep;S.orient=ori;closeModal();setStep(1)};
+}
+
+/* ====================== modal ====================== */
+let modalKey=null;
+function modal(html,cls=''){$('#modalRoot').innerHTML=`<div class="modal-bg"><div class="modal ${cls}" role="dialog">${html}</div></div>`;
+  const bg=$('#modalRoot .modal-bg');bg.addEventListener('mousedown',e=>{if(e.target===bg)closeModal()});
+  $$('#modalRoot [data-close]').forEach(b=>b.onclick=closeModal);}
+function closeModal(){$('#modalRoot').innerHTML='';modalKey=null}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modalRoot').innerHTML)closeModal()});
+
+/* ====================== plate model ====================== */
+const posOf=(r,c)=>ROWS[r]+(c+1);
+function groupMap(){const m={};S.groups.forEach(g=>g.wells.forEach(p=>m[p]=g));return m}
+function wellStats(list){const v=list.map(p=>S.wells[p]).filter(w=>w&&!w.excluded&&isFinite(w.cp)).map(w=>w.cp);return {n:v.length,mean:v.length?avg(v):NaN,sd:v.length>1?sdev(v):(v.length?0:NaN),vals:v}}
+function sampleOrder(){return uniq(S.groups.map(g=>g.sample))}
+function geneOrder(){return uniq(S.groups.map(g=>g.gene))}
+function sampleColor(s){const i=sampleOrder().indexOf(s);return SAMPLE_COLORS[(i<0?0:i)%SAMPLE_COLORS.length]}
+function pruneGenes(){const used=new Set(geneOrder());Object.keys(S.genes).forEach(g=>{if(!used.has(g))delete S.genes[g]})}
+// hover preview: the hovered well is always the FIRST well of the set (no snapping)
+function candidate(pos){const w=S.wells[pos];if(!w)return[];const N=S.rep,h=S.orient==='h',out=[];
+  for(let i=0;i<N;i++){const r=h?w.r:w.r+i,c=h?w.c+i:w.c;if(r>=S.nRows||c>=S.nCols)break;out.push(posOf(r,c))}
+  return out.filter(p=>S.wells[p])}
+// drag: straight line (row or column) from the start well to the current well, max N wells
+function dragLine(start,cur){const a=S.wells[start],b=S.wells[cur];if(!a||!b)return[start];
+  const dr=b.r-a.r,dc=b.c-a.c,horiz=Math.abs(dc)>=Math.abs(dr);const len=Math.min((horiz?Math.abs(dc):Math.abs(dr))+1,S.rep);
+  const sr=horiz?0:Math.sign(dr),sc=horiz?Math.sign(dc):0,out=[];
+  for(let i=0;i<len;i++)out.push(posOf(a.r+sr*i,a.c+sc*i));
+  return out.filter(p=>S.wells[p]).sort((x,y)=>S.wells[x].r-S.wells[y].r||S.wells[x].c-S.wells[y].c)}
+function heatColor(t){return `hsl(${178-t*138} ${62+t*13}% ${38+t*20}%)`}
+
+function renderPlate(){
+  const P=$('#plate');const {nRows,nCols}=S;const gm=groupMap();
+  P.style.gridTemplateColumns=`22px repeat(${nCols},minmax(0,1fr))`;
+  const cps=Object.values(S.wells).map(w=>w.cp).filter(isFinite);const mn=Math.min(...cps),mx=Math.max(...cps);
+  let h='<div></div>';for(let c=0;c<nCols;c++)h+=`<div class="hdr">${c+1}</div>`;
+  for(let r=0;r<nRows;r++){h+=`<div class="hdr">${ROWS[r]}</div>`;
+    for(let c=0;c<nCols;c++){const pos=posOf(r,c),w=S.wells[pos];
+      if(!w){h+=`<div class="well empty"><span class="wid">${pos}</span></div>`;continue}
+      const g=gm[pos];const cls=['well'];let st='';
+      if(g){cls.push('as');st+=`--sc:${sampleColor(g.sample)};`;if(S.genes[g.gene]?.hk)cls.push('hk');
+        if(gm[posOf(r,c+1)]===g&&c+1<nCols)cls.push('jr');if(r+1<nRows&&gm[posOf(r+1,c)]===g)cls.push('jd')}
+      else if(S.heat&&isFinite(w.cp)){st+=`--heat:${heatColor((w.cp-mn)/((mx-mn)||1))};`;cls.push('heat')}
+      if(w.excluded)cls.push('ex');if(S.customSel.includes(pos))cls.push('csel');
+      const tip=`${pos}${w.name?' · '+w.name:''} · Cp ${isFinite(w.cp)?w.cp.toFixed(2):'n/a'}${g?` · ${g.sample} / ${g.gene}`:''}${w.excluded?' · EXCLUDED':''}`;
+      h+=`<div class="${cls.join(' ')}" data-pos="${pos}" style="${st}" title="${esc(tip)}"><span class="wid">${pos}</span><span class="cp">${isFinite(w.cp)?w.cp.toFixed(2):'—'}</span>${g?`<span class="lab">${esc(g.gene)}</span><span class="lab2">${esc(g.sample)}</span>`:''}</div>`}}
+  P.innerHTML=h;
+  $('#plateSub').innerHTML=`${esc(S.file?.exp||'')} <span class="pill acc" style="margin-left:6px">${S.rep} replicates · ${S.orient==='h'?'row‑wise':'column‑wise'}</span>`;
+  $$('#segRep button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.rep));
+  $$('#segOri button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.orient));
+  $('#heatTgl').checked=S.heat;$('#heatLegend').style.visibility=S.heat?'visible':'hidden';
+  renderSide();updateSelbar();
+}
+function cell(p){return $(`#plate .well[data-pos="${p}"]`)}
+function clearHover(){$$('#plate .cand,#plate .ghl').forEach(e=>e.classList.remove('cand','bad','ghl'))}
+let hoverSet=[];
+function onHover(pos){clearHover();hoverSet=[];const gm=groupMap();const g=gm[pos];
+  if(g){g.wells.forEach(p=>cell(p)?.classList.add('ghl'));return}
+  if(S.customSel.length)return;
+  const cand=candidate(pos);const bad=cand.length<S.rep||cand.some(p=>gm[p]);
+  cand.forEach(p=>{const e=cell(p);if(e){e.classList.add('cand');if(bad)e.classList.add('bad')}});
+  if(!bad)hoverSet=cand}
+const plateEl=$('#plate');
+let drag=null,suppressClick=false;
+function showDrag(){clearHover();const gm=groupMap();const bad=drag.sel.some(p=>gm[p]);
+  drag.sel.forEach(p=>{const e=cell(p);if(e){e.classList.add('cand');if(bad)e.classList.add('bad')}});drag.bad=bad}
+plateEl.addEventListener('mousedown',e=>{if(e.button!==0||e.shiftKey||e.metaKey||e.ctrlKey||S.customSel.length)return;
+  const w=e.target.closest('.well[data-pos]');if(!w||groupMap()[w.dataset.pos])return;
+  e.preventDefault();drag={start:w.dataset.pos,sel:[w.dataset.pos],moved:false,bad:false}});
+plateEl.addEventListener('mouseover',e=>{const w=e.target.closest('.well[data-pos]');if(!w)return;
+  if(drag){if(w.dataset.pos!==drag.start)drag.moved=true;drag.sel=dragLine(drag.start,w.dataset.pos);showDrag();return}
+  onHover(w.dataset.pos)});
+document.addEventListener('mouseup',()=>{if(!drag)return;const d=drag;drag=null;if(!d.moved)return;
+  suppressClick=true;setTimeout(()=>suppressClick=false,0);
+  if(d.bad){clearHover();return toast('That selection overlaps an existing group','err')}
+  openAssign(null,[...d.sel])});
+plateEl.addEventListener('mouseleave',()=>{if(!drag){clearHover();hoverSet=[]}});
+plateEl.addEventListener('click',e=>{if(suppressClick)return;const w=e.target.closest('.well[data-pos]');if(!w)return;const pos=w.dataset.pos;const g=groupMap()[pos];
+  if(g){openAssign(g.id);return}
+  if(e.shiftKey||e.metaKey||e.ctrlKey){const i=S.customSel.indexOf(pos);i<0?S.customSel.push(pos):S.customSel.splice(i,1);renderPlate();return}
+  if(S.customSel.length){toast('Finish or clear the custom selection first');return}
+  onHover(pos);if(hoverSet.length)openAssign(null,[...hoverSet]);else toast('That set overlaps an existing group','err')});
+plateEl.addEventListener('contextmenu',e=>{const w=e.target.closest('.well[data-pos]');if(!w)return;e.preventDefault();const W=S.wells[w.dataset.pos];W.excluded=!W.excluded;S.R=null;renderPlate();toast(`${W.pos} ${W.excluded?'excluded':'included again'}`)});
+function updateSelbar(){const n=S.customSel.length;$('#selbar').classList.toggle('on',n>0);$('#selTxt').innerHTML=`<b>${n}</b> well${n>1?'s':''} selected · <span class="mono">${S.customSel.join(', ')}</span>`}
+$('#selClear').onclick=()=>{S.customSel=[];renderPlate()};
+$('#selAssign').onclick=()=>{const gm=groupMap();if(S.customSel.some(p=>gm[p]))return toast('Selection overlaps a group','err');openAssign(null,[...S.customSel])};
+$('#segRep').onclick=e=>{const b=e.target.closest('button');if(b){S.rep=+b.dataset.v;renderPlate()}};
+$('#segOri').onclick=e=>{const b=e.target.closest('button');if(b){S.orient=b.dataset.v;renderPlate()}};
+$('#heatTgl').onchange=e=>{S.heat=e.target.checked;renderPlate()};
+$('#clearAll').onclick=()=>{if(!S.groups.length)return;if(!confirm('Remove all group assignments?'))return;S.groups=[];S.genes={};S.A=null;S.R=null;renderPlate()};
+$('#saveLayout').onclick=()=>{download(`${(S.file?.exp||'plate')}_layout.json`,JSON.stringify({rep:S.rep,orient:S.orient,groups:S.groups.map(g=>({wells:g.wells,sample:g.sample,gene:g.gene})),genes:S.genes,excluded:Object.values(S.wells).filter(w=>w.excluded).map(w=>w.pos)},null,2),'application/json')};
+$('#loadLayout').onclick=()=>$('#layoutIn').click();
+$('#layoutIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const L=JSON.parse(await f.text());S.rep=L.rep||S.rep;S.orient=L.orient||S.orient;S.groups=(L.groups||[]).filter(g=>g.wells.every(p=>S.wells[p])).map(g=>({...g,id:++S.gid}));S.genes=L.genes||{};pruneGenes();Object.values(S.wells).forEach(w=>w.excluded=(L.excluded||[]).includes(w.pos));S.A=null;S.R=null;renderPlate();toast('Layout loaded','ok')}catch(err){toast('Invalid layout file','err')}};
+
+/* ---------- assign modal ---------- */
+function openAssign(gid,wells){
+  const g=gid!=null?S.groups.find(x=>x.id===gid):null;wells=g?g.wells:wells;
+  const st=wellStats(wells);const samples=sampleOrder(),genes=geneOrder();
+  const sv=g?g.sample:S.last.sample,gv=g?g.gene:S.last.gene;
+  modal(`<div class="m-head"><div class="m-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5" fill="#fff"/></svg></div>
+    <div><h2>${g?'Edit group':'Assign group'}</h2><p>${wells.length} wells · ${wells.join(' · ')}</p></div></div>
+    <div class="wchips">${wells.map(p=>{const w=S.wells[p];return `<div class="wchip ${w.excluded?'ex':''}"><b>${p}</b><span>${f2(w.cp)}</span></div>`}).join('')}
+      <div class="wstat"><span>Mean Cp</span><b>${f2(st.mean)}</b><span>SD</span><b class="${st.sd>0.5?'warn':''}">${f3(st.sd)}${st.sd>0.5?' ⚠':''}</b></div></div>
+    <label class="field"><span>Sample / group name</span><input type="text" id="fSample" value="${esc(sv)}" placeholder="e.g. shCtrl, shDUX4 #1, Day 3…" autocomplete="off"></label>
+    ${samples.length?`<div class="chips" id="sChips">${samples.map(s=>`<button class="chip" data-v="${esc(s)}"><i style="background:${sampleColor(s)}"></i>${esc(s)}</button>`).join('')}</div>`:''}
+    <label class="field"><span>Gene</span><input type="text" id="fGene" value="${esc(gv)}" placeholder="e.g. GAPDH, DUX4, ZSCAN4…" autocomplete="off"></label>
+    ${genes.length?`<div class="chips" id="gChips">${genes.map(x=>`<button class="chip" data-v="${esc(x)}">${S.genes[x]?.hk?'★ ':''}<em>${esc(x)}</em></button>`).join('')}</div>`:''}
+    <label class="check"><input type="checkbox" id="fHK"><span><b>Housekeeping / reference gene</b> — used to normalize every sample with the same name</span></label>
+    <div class="m-foot">${g?'<button class="btn danger" id="mDel">Delete group</button>':''}<span class="grow"></span><button class="btn ghost" data-close>Cancel</button><button class="btn primary" id="mOk">${g?'Save':'Assign'} <span style="opacity:.7;font-size:11px">↵</span></button></div>`);
+  const fS=$('#fSample'),fG=$('#fGene'),fH=$('#fHK');
+  const syncHK=()=>{const n=fG.value.trim();fH.checked=S.genes[n]?S.genes[n].hk:HK_RE.test(n)};syncHK();
+  const hl=()=>{$$('#sChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===fS.value.trim()));$$('#gChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===fG.value.trim()))};hl();
+  fG.addEventListener('input',()=>{syncHK();hl()});fS.addEventListener('input',hl);
+  $('#sChips')&&($('#sChips').onclick=e=>{const c=e.target.closest('.chip');if(c){fS.value=c.dataset.v;hl();fG.focus();fG.select()}});
+  $('#gChips')&&($('#gChips').onclick=e=>{const c=e.target.closest('.chip');if(c){fG.value=c.dataset.v;syncHK();hl()}});
+  fS.focus();fS.select();
+  const save=()=>{const s=fS.value.trim(),gn=fG.value.trim();
+    if(!s||!gn){const m=$('#modalRoot .modal');m.classList.remove('shake');void m.offsetWidth;m.classList.add('shake');(s?fG:fS).focus();return}
+    S.genes[gn]={hk:fH.checked};
+    if(g){g.sample=s;g.gene=gn}else S.groups.push({id:++S.gid,wells:[...wells],sample:s,gene:gn});
+    S.last={sample:s,gene:gn};S.customSel=[];pruneGenes();S.R=null;closeModal();renderPlate()};
+  $('#mOk').onclick=save;
+  $('#modalRoot .modal').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();save()}});
+  if(g)$('#mDel').onclick=()=>{S.groups=S.groups.filter(x=>x!==g);pruneGenes();S.R=null;closeModal();renderPlate()};
+}
+
+/* ---------- sidebar ---------- */
+function renderSide(){
+  const total=Object.values(S.wells).length,gm=groupMap(),assigned=Object.keys(gm).length;
+  $('#progBar').style.width=(100*assigned/total)+'%';
+  $('#progTxt').textContent=`${assigned} / ${total} wells assigned`;$('#progGrp').textContent=`${S.groups.length} groups`;
+  const genes=geneOrder();
+  $('#geneList').innerHTML=genes.length?genes.map(g=>{const hk=S.genes[g]?.hk;const n=S.groups.filter(x=>x.gene===g).length;
+    return `<div class="gene-row"><button class="star ${hk?'on':''}" data-hk="${esc(g)}" title="Toggle housekeeping">★</button><span class="gname">${esc(g)}</span><span class="pill ${hk?'ref':'acc'}">${hk?'Reference':'Target'}</span><span class="pill">${n}</span></div>`}).join('')
+    :'<div class="empty-s">No genes yet. Hover the plate and click a set to start.</div>';
+  const samples=sampleOrder();
+  $('#groupList').innerHTML=samples.length?samples.map(s=>{const gs=S.groups.filter(g=>g.sample===s);
+    return `<div class="sgrp"><div class="sname"><i style="background:${sampleColor(s)}"></i>${esc(s)}<span>${gs.length} set${gs.length>1?'s':''}</span></div>
+      ${gs.map(g=>{const st=wellStats(g.wells);return `<div class="gitem" data-gid="${g.id}"><span class="g">${S.genes[g.gene]?.hk?'★ ':''}${esc(g.gene)}</span><span class="w mono">${g.wells[0]}–${g.wells[g.wells.length-1]}</span><span class="v mono ${st.sd>0.5?'warn':''}">${f2(st.mean)}±${f2(st.sd)}</span><button class="x" data-del="${g.id}" title="Delete">×</button></div>`}).join('')}</div>`}).join('')
+    :'<div class="empty-s">Groups appear here as you assign them.</div>';
+}
+$('#geneList').onclick=e=>{const b=e.target.closest('[data-hk]');if(!b)return;const g=b.dataset.hk;S.genes[g].hk=!S.genes[g].hk;S.R=null;renderPlate()};
+$('#groupList').onclick=e=>{const d=e.target.closest('[data-del]');if(d){S.groups=S.groups.filter(g=>g.id!==+d.dataset.del);pruneGenes();S.R=null;renderPlate();return}
+  const it=e.target.closest('.gitem');if(it)openAssign(+it.dataset.gid)};
+$('#groupList').addEventListener('mouseover',e=>{const it=e.target.closest('.gitem');clearHover();if(it){const g=S.groups.find(x=>x.id===+it.dataset.gid);g&&g.wells.forEach(p=>cell(p)?.classList.add('ghl'))}});
+$('#groupList').addEventListener('mouseleave',clearHover);
+$('#doneBtn').onclick=()=>{
+  if(!S.groups.length)return toast('Assign at least one group first','err');
+  const genes=geneOrder();
+  if(!genes.some(g=>S.genes[g].hk))return toast('Mark at least one housekeeping gene with ★','err');
+  if(!genes.some(g=>!S.genes[g].hk))return toast('You need at least one target (non‑housekeeping) gene','err');
+  initAnalysis();setStep(2)};
+
+/* ====================== analysis ====================== */
+function initAnalysis(){
+  const samples=sampleOrder(),genes=geneOrder(),P=S.A||{};
+  const prevS=new Map((P.samples||[]).map((x,i)=>[x.name,{...x,i}])),prevT=new Map((P.targets||[]).map((x,i)=>[x.name,{...x,i}])),prevR=new Map((P.refs||[]).map(x=>[x.name,x]));
+  const ord=(arr,prev)=>arr.slice().sort((a,b)=>(prev.get(a)?.i??1e3+arr.indexOf(a))-(prev.get(b)?.i??1e3+arr.indexOf(b)));
+  const cal=samples.includes(P.cal)?P.cal:(samples.find(s=>/ctrl|control|kontrol|scr|scram|mock|\bNT\b|\bEV\b|empty|vehicle|DMSO|\bWT\b|untreated|shLuc|shGFP|siNC/i.test(s))||samples[0]);
+  S.A={
+    refs:genes.filter(g=>S.genes[g].hk).map(g=>({name:g,on:prevR.get(g)?.on??true})),
+    targets:ord(genes.filter(g=>!S.genes[g].hk),prevT).map(g=>({name:g,on:prevT.get(g)?.on??true})),
+    samples:ord(samples,prevS).map(s=>({name:s,on:prevS.get(s)?.on??true,cal:samples.includes(prevS.get(s)?.cal)?prevS.get(s).cal:cal})),
+    mode:P.mode||'single',cal,groupBy:P.groupBy||'gene',propCal:P.propCal||false};
+}
+function pooled(sample,gene){return wellStats(S.groups.filter(g=>g.sample===sample&&g.gene===gene).flatMap(g=>g.wells))}
+function refOf(sample){const refs=S.A.refs.filter(r=>r.on).map(r=>r.name);if(!refs.length)return null;
+  const st=refs.map(g=>pooled(sample,g));if(st.some(s=>!s.n))return null;
+  return {mean:avg(st.map(s=>s.mean)),sd:Math.sqrt(st.reduce((a,s)=>a+s.sd**2,0))/st.length,parts:st,genes:refs}}
+function renderAnalysis(){
+  const A=S.A;const B=$('#analysisBody');
+  const refsOn=A.refs.filter(r=>r.on);
+  const sampleNames=A.samples.map(s=>s.name);
+  const calOpts=sel=>sampleNames.map(s=>`<option ${s===sel?'selected':''} value="${esc(s)}">${esc(s)}</option>`).join('');
+  const rows=A.samples.map((s,i)=>{const r=refOf(s.name);const cal=A.mode==='single'?A.cal:s.cal;
+    const missingT=A.targets.filter(t=>t.on&&!pooled(s.name,t.name).n).map(t=>t.name);
+    return `<tr style="${s.on?'':'opacity:.45'}"><td style="width:30px"><span class="updown"><button data-mv="${i}" data-d="-1">▲</button><button data-mv="${i}" data-d="1">▼</button></span></td>
+      <td style="width:30px"><input type="checkbox" class="cb" data-son="${i}" ${s.on?'checked':''}></td>
+      <td><span class="dot" style="background:${sampleColor(s.name)};margin-right:8px"></span><b>${esc(s.name)}</b></td>
+      <td>${A.mode==='single'?(s.name===A.cal?'<span class="pill acc">★ Calibrator (= 1)</span>':`<span class="muted">→ ${esc(A.cal)}</span>`):`<select data-scal="${i}">${calOpts(cal)}</select>${s.name===cal?' <span class="pill acc">self</span>':''}`}</td>
+      <td class="num">${r?f2(r.mean):'—'}</td><td class="num muted">${r?f3(r.sd):''}</td>
+      <td>${!r?'<span class="pill bad">No reference data</span>':missingT.length?`<span class="pill" title="${esc(missingT.join(', '))}">${missingT.length} target(s) missing</span>`:'<span class="pill ok">✓ Matched</span>'}</td></tr>`}).join('');
+  B.innerHTML=`<div class="agrid">
+    <div class="card c5"><h3><span class="num">1</span>Reference genes</h3><p class="desc">Housekeeping genes are matched to targets by <b>sample name</b>. With several references, their Ct values are averaged (= geometric mean of expression).</p>
+      <div class="tchips" id="refChips">${A.refs.map((r,i)=>`<div class="tchip ref ${r.on?'on':''}" data-ri="${i}"><span class="tick">✓</span>★ <em>${esc(r.name)}</em></div>`).join('')}</div>
+      ${!refsOn.length?'<div class="notice err">Select at least one reference gene.</div>':''}
+      <h3 style="margin-top:22px"><span class="num">2</span>Target genes</h3><p class="desc">Order here is the order on the graph.</p>
+      <div class="tchips" id="tgtChips">${A.targets.map((t,i)=>`<div class="tchip ${t.on?'on':''}" data-ti="${i}"><span class="tick">✓</span><em>${esc(t.name)}</em><span class="updown" style="flex-direction:row"><button data-tmv="${i}" data-d="-1">◀</button><button data-tmv="${i}" data-d="1">▶</button></span></div>`).join('')}</div>
+    </div>
+    <div class="card c7"><h3><span class="num">3</span>Normalization</h3><p class="desc">Normalize against one calibrator for every sample, or give each sample its own calibrator (e.g. shDUX4 → shCtrl of the same cell line).</p>
+      <div class="bigseg" id="modeSeg"><button data-m="single" class="${A.mode==='single'?'on':''}"><b>One calibrator</b><span>All samples vs. a single control</span></button><button data-m="multi" class="${A.mode==='multi'?'on':''}"><b>Multiple calibrators</b><span>Choose the control per sample</span></button></div>
+      ${A.mode==='single'?`<label class="field"><span>Calibrator / control sample (fold change = 1)</span><select id="calSel">${calOpts(A.cal)}</select></label>`:`<div class="notice info">Set the “Normalize to” column in the table below for each sample.</div>`}
+      <div class="formula" style="margin-top:14px">ΔCt = Ct<sub>target</sub> − Ct<sub>reference</sub> &nbsp;·&nbsp; SD<sub>ΔCt</sub> = √(SD<sub>t</sub>² + SD<sub>r</sub>²)<br>ΔΔCt = ΔCt<sub>sample</sub> − ΔCt<sub>calibrator</sub><br>Fold change = 2<sup>−ΔΔCt</sup> &nbsp;·&nbsp; min = 2<sup>−(ΔΔCt+SD)</sup> &nbsp;·&nbsp; max = 2<sup>−(ΔΔCt−SD)</sup></div>
+      <label class="switch" style="margin-top:14px"><input type="checkbox" id="propCal" ${A.propCal?'checked':''}><span></span>Also propagate calibrator SD into ΔΔCt error</label>
+    </div>
+    <div class="card c12"><h3><span class="num">4</span>Samples</h3><p class="desc">Untick to leave a sample out. Use ▲▼ to set the plotting order.</p>
+      <div class="tscroll"><table class="tbl"><thead><tr><th></th><th></th><th>Sample</th><th>Normalize to</th><th class="num">Ref. Ct</th><th class="num">SD</th><th>Status</th></tr></thead><tbody id="sampTbody">${rows}</tbody></table></div>
+    </div>
+    <div class="card c12"><h3><span class="num">5</span>Comparison layout</h3>
+      <div class="bigseg" id="grpSeg" style="max-width:620px"><button data-g="gene" class="${A.groupBy==='gene'?'on':''}"><b>Group by gene</b><span>Clusters = genes · bars = samples</span></button><button data-g="sample" class="${A.groupBy==='sample'?'on':''}"><b>Group by sample</b><span>Clusters = samples · bars = genes</span></button></div>
+      <p class="desc" style="margin:0">You can switch this any time on the graph page as well.</p>
+    </div></div>
+    <div class="foot-actions"><button class="btn" id="aBack">← Back to plate</button><button class="btn primary lg" id="aGo">Calculate results →</button></div>`;
+  $('#refChips').onclick=e=>{const c=e.target.closest('[data-ri]');if(c){const r=A.refs[+c.dataset.ri];r.on=!r.on;renderAnalysis()}};
+  $('#tgtChips').onclick=e=>{const m=e.target.closest('[data-tmv]');if(m){e.stopPropagation();const i=+m.dataset.tmv,j=i+ +m.dataset.d;if(j>=0&&j<A.targets.length){[A.targets[i],A.targets[j]]=[A.targets[j],A.targets[i]];renderAnalysis()}return}
+    const c=e.target.closest('[data-ti]');if(c){const t=A.targets[+c.dataset.ti];t.on=!t.on;renderAnalysis()}};
+  $('#modeSeg').onclick=e=>{const b=e.target.closest('[data-m]');if(b){A.mode=b.dataset.m;if(A.mode==='multi')A.samples.forEach(s=>{if(!sampleNames.includes(s.cal))s.cal=A.cal});renderAnalysis()}};
+  $('#grpSeg').onclick=e=>{const b=e.target.closest('[data-g]');if(b){A.groupBy=b.dataset.g;renderAnalysis()}};
+  $('#calSel')&&($('#calSel').onchange=e=>{A.cal=e.target.value;A.samples.forEach(s=>s.cal=A.cal);renderAnalysis()});
+  $('#propCal').onchange=e=>{A.propCal=e.target.checked};
+  $('#sampTbody').onclick=e=>{const m=e.target.closest('[data-mv]');if(m){const i=+m.dataset.mv,j=i+ +m.dataset.d;if(j>=0&&j<A.samples.length){[A.samples[i],A.samples[j]]=[A.samples[j],A.samples[i]];renderAnalysis()}}};
+  $('#sampTbody').onchange=e=>{const t=e.target;if(t.dataset.son!=null){A.samples[+t.dataset.son].on=t.checked;renderAnalysis()}if(t.dataset.scal!=null){A.samples[+t.dataset.scal].cal=t.value;renderAnalysis()}};
+  $('#aBack').onclick=()=>setStep(1);
+  $('#aGo').onclick=()=>{const R=compute();if(!R.rows.length){toast('Nothing to calculate — check references, samples and targets','err');return}
+    S.R=R;if(!S.cfg)S.cfg=defaultCfg();S.cfg.groupBy=A.groupBy;setStep(3)};
+}
+
+function compute(){
+  const A=S.A;const rows=[],warnings=[];
+  const targets=A.targets.filter(t=>t.on).map(t=>t.name),samples=A.samples.filter(s=>s.on);
+  if(!A.refs.some(r=>r.on))return {rows,warnings:['No reference gene selected']};
+  for(const tg of targets)for(const s of samples){
+    const t=pooled(s.name,tg);if(!t.n){continue}
+    const h=refOf(s.name);if(!h){warnings.push(`${s.name}: no reference gene data — skipped`);continue}
+    const cal=A.mode==='single'?A.cal:s.cal;
+    const dct=t.mean-h.mean,sdD=Math.sqrt(t.sd**2+h.sd**2);
+    const ct=pooled(cal,tg),hc=refOf(cal);
+    let dctC=NaN,sdC=NaN;
+    if(ct.n&&hc){dctC=ct.mean-hc.mean;sdC=Math.sqrt(ct.sd**2+hc.sd**2)}else warnings.push(`${s.name} / ${tg}: calibrator “${cal}” has no data for ${tg} — fold change unavailable`);
+    const ddct=dct-dctC;const sdDD=(A.propCal&&s.name!==cal)?Math.sqrt(sdD**2+sdC**2):sdD;
+    const pdct=t.vals.map(v=>v-h.mean),pddct=pdct.map(v=>v-dctC);
+    rows.push({sample:s.name,gene:tg,cal,ctT:t.mean,sdT:t.sd,nT:t.n,ctH:h.mean,sdH:h.sd,dct,sdD,dctC,ddct,sdDD,
+      fc:2**-ddct,fcLo:2**-(ddct+sdDD),fcHi:2**-(ddct-sdDD),rel:2**-dct,relLo:2**-(dct+sdD),relHi:2**-(dct-sdD),
+      pts:{dct:pdct,ddct:pddct,fc:pddct.map(v=>2**-v),rel:pdct.map(v=>2**-v)}});
+  }
+  // high-SD flags
+  S.groups.forEach(g=>{const st=wellStats(g.wells);if(st.sd>0.5)warnings.push(`${g.sample} / ${g.gene} (${g.wells[0]}–${g.wells.at(-1)}): replicate SD ${st.sd.toFixed(3)} > 0.5 (consider excluding an outlier on the plate map)`);if(st.n<g.wells.length&&st.n>0&&g.wells.some(p=>!isFinite(S.wells[p].cp)))warnings.push(`${g.sample} / ${g.gene}: ${g.wells.length-st.n} well(s) without Cp`)});
+  return {rows,warnings:uniq(warnings)};
+}
+
+/* ====================== chart config ====================== */
+const FONTS=['Arial','Helvetica','Times New Roman','Calibri','Georgia','Verdana','Tahoma','Trebuchet MS','Garamond','Courier New'];
+const PALETTES={
+  'Colorblind safe':['#0072B2','#E69F00','#009E73','#D55E00','#CC79A7','#56B4E9','#F0E442','#000000'],
+  'Prism classic':['#FFFFFF','#B3B3B3','#595959','#000000','#E0E0E0','#8C8C8C','#333333','#C8C8C8'],
+  'Nature (NPG)':['#E64B35','#4DBBD5','#00A087','#3C5488','#F39B7F','#8491B4','#91D1C2','#DC0000'],
+  'Science (AAAS)':['#3B4992','#EE0000','#008B45','#631879','#008280','#BB0021','#5F559B','#A20056'],
+  'Soft pastel':['#8DA0CB','#FC8D62','#66C2A5','#E78AC3','#A6D854','#FFD92F','#E5C494','#B3B3B3'],
+  'Ocean':['#DCEAF7','#9ECAE1','#4292C6','#2171B5','#08519C','#08306B','#C6DBEF','#6BAED6'],
+  'Sunset':['#FFE3A8','#FDB863','#F07F3C','#D7301F','#99001A','#5C0012','#FEC97E','#E85D2A'],
+  'Violet':['#EDE7FF','#C3B5FF','#8F7BFF','#6246EA','#3D2BA6','#211563','#A99AFF','#4E37C9']};
+const YT={fc:'Relative mRNA expression\n(fold change)',log2fc:'log2 fold change',rel:'Relative expression (2^-ΔCt)',dct:'ΔCt (Ct target − Ct reference)',ddct:'ΔΔCt'};
+function defaultCfg(){
+  const base={value:'fc',groupBy:'gene',errMode:'minmax',errDir:'both',showPoints:true,
+    font:'Arial',textColor:'#000000',title:'',titleSize:11,titleBold:false,yTitle:YT.fc,yTitleAuto:true,yTitleSize:14,xTitle:'',xTitleSize:12,axisTitleBold:false,
+    tickSize:13,xTickSize:15.5,xTickBold:false,xRot:0,italicGenes:true,
+    barW:20,barGap:2,groupGap:29,edgePad:9,borderW:0.75,borderMode:'custom',borderColor:'#000000',fillOpacity:0.8,
+    errW:0.75,capW:0.25,errColor:'#000000',ptShape:'circle',ptSize:2.6,ptFill:'#ffffff',ptStroke:'#000000',ptStrokeW:1,jitter:0.45,
+    plotH:300,axisW:1.5,axisColor:'#000000',tickLen:6,tickDir:'out',yScale:'linear',yMinAuto:true,yMin:0,yMaxAuto:true,yMax:2,yStepAuto:true,yStep:0.5,
+    refLine:true,refColor:'#7a7a7a',refDash:'dash',refW:1,legend:'right',legendSize:13,legendBox:13,
+    bg:'white',pngScale:4,palette:'Colorblind safe',ss:{}};
+  const saved=ls.get('qs.style');if(saved){delete saved.ss;delete saved.title;Object.assign(base,saved)}
+  return base;
+}
+function saveStyle(){const c={...S.cfg};delete c.ss;delete c.title;ls.set('qs.style',c)}
+function chartData(){
+  const R=S.R,c=S.cfg,byGene=c.groupBy==='gene';
+  const genes=S.A.targets.filter(t=>t.on).map(t=>t.name).filter(g=>R.rows.some(r=>r.gene===g));
+  const samples=S.A.samples.filter(s=>s.on).map(s=>s.name).filter(s=>R.rows.some(r=>r.sample===s));
+  const cats=byGene?genes:samples,ser=byGene?samples:genes;
+  return {cats,ser,catKind:byGene?'gene':'sample',serKind:byGene?'sample':'gene',
+    get:(cat,s)=>R.rows.find(r=>byGene?(r.gene===cat&&r.sample===s):(r.sample===cat&&r.gene===s))};
+}
+function valOf(r,mode){if(!r)return null;
+  switch(mode){
+    case 'fc':return {v:r.fc,lo:r.fcLo,hi:r.fcHi,pts:r.pts.fc};
+    case 'rel':return {v:r.rel,lo:r.relLo,hi:r.relHi,pts:r.pts.rel};
+    case 'log2fc':return {v:-r.ddct,lo:-r.ddct-r.sdDD,hi:-r.ddct+r.sdDD,pts:r.pts.ddct.map(x=>-x)};
+    case 'dct':return {v:r.dct,lo:r.dct-r.sdD,hi:r.dct+r.sdD,pts:r.pts.dct};
+    case 'ddct':return {v:r.ddct,lo:r.ddct-r.sdDD,hi:r.ddct+r.sdDD,pts:r.pts.ddct};}}
+const skey=(kind,name)=>kind+':'+name;
+function ensureSeries(D){const c=S.cfg;const pal=PALETTES[c.palette]||PALETTES['Colorblind safe'];
+  D.ser.forEach((s,i)=>{const k=skey(D.serKind,s);if(!c.ss[k])c.ss[k]={color:pal[i%pal.length],fill:'solid'}})}
+function applyPalette(name){const D=chartData();const pal=PALETTES[name];S.cfg.palette=name;D.ser.forEach((s,i)=>{const k=skey(D.serKind,s);S.cfg.ss[k]={...(S.cfg.ss[k]||{fill:'solid'}),color:pal[i%pal.length]}});saveStyle()}
+function niceStep(range,n){const raw=range/n;const p=10**Math.floor(Math.log10(raw));const f=raw/p;return (f<1.5?1:f<2.25?2:f<3.5?2.5:f<7.5?5:10)*p}
+const mctx=document.createElement('canvas').getContext('2d');
+function darker(hex,a=0.35){const n=parseInt(hex.slice(1),16);let r=n>>16,g=(n>>8)&255,b=n&255;r=Math.round(r*(1-a));g=Math.round(g*(1-a));b=Math.round(b*(1-a));return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
+
+/* ====================== chart renderer ====================== */
+function buildSVG(){
+  const c=S.cfg,D=chartData();ensureSeries(D);
+  const K=D.ser.length,C=D.cats.length;if(!K||!C)return null;
+  const F=c.font,FF=`'${F}', Arial, Helvetica, sans-serif`;
+  const meas=(t,size,bold,ital)=>{mctx.font=`${ital?'italic ':''}${bold?'bold ':''}${size}px '${F}', Arial`;return mctx.measureText(t).width};
+  const itCat=c.italicGenes&&D.catKind==='gene',itSer=c.italicGenes&&D.serKind==='gene';
+  const cells=D.cats.map(cat=>D.ser.map(s=>{const v=valOf(D.get(cat,s),c.value);return v&&isFinite(v.v)?v:null}));
+  const log=c.yScale!=='linear',base=c.yScale==='log2'?2:10;
+  let vals=[];cells.flat().forEach(v=>{if(!v)return;vals.push(v.v);if(c.errMode!=='none'){vals.push(v.hi);if(c.errDir==='both')vals.push(v.lo)}if(c.showPoints)vals.push(...v.pts)});
+  vals=vals.filter(isFinite);if(log)vals=vals.filter(v=>v>0);
+  if(!vals.length)vals=log?[1,2]:[0,1];
+  let yMin,yMax,ticks=[],step=1;
+  if(!log){
+    let lo=Math.min(0,...vals),hi=Math.max(0,...vals);if(hi===lo)hi=lo+1;
+    step=c.yStepAuto?niceStep(hi-lo,5):Math.max(+c.yStep||1,1e-9);
+    yMin=c.yMinAuto?Math.floor(lo/step+1e-9)*step:+c.yMin;
+    yMax=c.yMaxAuto?Math.ceil(hi/step-1e-9)*step:+c.yMax;
+    if(!(yMax>yMin))yMax=yMin+step;
+    if((yMax-yMin)/step>40)step=niceStep(yMax-yMin,5);
+    for(let t=Math.ceil(yMin/step-1e-9)*step;t<=yMax+step*1e-6;t+=step)ticks.push(+t.toPrecision(12));
+  }else{
+    const L=x=>Math.log(x)/Math.log(base);
+    const lmin=Math.floor(L(Math.min(...vals))+1e-9),lmax=Math.ceil(L(Math.max(...vals))-1e-9);
+    yMin=c.yMinAuto?base**lmin:Math.max(+c.yMin,1e-9);yMax=c.yMaxAuto?base**Math.max(lmax,lmin+1):+c.yMax;
+    if(!(yMax>yMin))yMax=yMin*base;
+    for(let k=Math.ceil(L(yMin)-1e-9);k<=Math.floor(L(yMax)+1e-9);k++)ticks.push(base**k);
+  }
+  const dec=log?0:Math.min(4,((String(+step.toPrecision(6)).split('.')[1])||'').length);
+  const fmt=t=>log?String(+t.toPrecision(4)):t.toFixed(dec).replace(/^-0(\.0+)?$/,'0'+(dec?'.'+'0'.repeat(dec):''));
+  const tickLabels=ticks.map(fmt);
+  const tickLW=Math.max(0,...tickLabels.map(t=>meas(t,c.tickSize,false,false)));
+  const groupW=K*c.barW+(K-1)*c.barGap;
+  const plotW=c.edgePad*2+C*groupW+(C-1)*c.groupGap,plotH=c.plotH;
+  const yLines=c.yTitle?c.yTitle.split('\n'):[],yLH=c.yTitleSize*1.18;
+  const tOut=c.tickDir==='out'?c.tickLen:0;
+  let left=14+(yLines.length?yLines.length*yLH+8:0)+tickLW+6+tOut;
+  const rad=c.xRot*Math.PI/180;
+  const xlws=D.cats.map(t=>meas(t,c.xTickSize,c.xTickBold,itCat));const xlw=Math.max(...xlws);
+  const xLabH=c.xRot?xlw*Math.sin(rad)+c.xTickSize*Math.cos(rad):c.xTickSize*1.15;
+  if(c.xRot){const ext=c.edgePad+groupW/2-xlws[0]*Math.cos(rad);if(ext<0)left+=-ext}
+  const xTitleH=c.xTitle?c.xTitleSize*1.3+6:0;
+  const bottom=10+xLabH+(xTitleH?8+xTitleH:0)+14;
+  const titleH=c.title?c.titleSize*1.25+12:0;
+  const legItemH=Math.max(c.legendBox,c.legendSize)+7;
+  const legNames=D.ser.map(s=>meas(s,c.legendSize,false,itSer));
+  const legW=c.legendBox+8+Math.max(...legNames);
+  let top=14+titleH,right=18,legRowH=0;
+  if(c.legend==='right')right+=legW+22;
+  if(c.legend==='top'){legRowH=legItemH+10;top+=legRowH}
+  const W=Math.ceil(left+plotW+right),H=Math.ceil(top+plotH+bottom);
+  const pB=top+plotH,pR=left+plotW;
+  const Y=v=>{if(log){const a=Math.log(yMin),b=Math.log(yMax);return pB-(Math.log(Math.max(v,1e-12))-a)/(b-a)*plotH}return pB-(v-yMin)/(yMax-yMin)*plotH};
+  const baseV=log?yMin:Math.min(Math.max(0,yMin),yMax);
+  const tc=c.textColor;
+  const T=(x,y,txt,o={})=>`<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="${o.size}" ${o.bold?'font-weight="bold"':''} ${o.ital?'font-style="italic"':''} text-anchor="${o.anchor||'middle'}" ${o.db?`dominant-baseline="${o.db}"`:''} fill="${tc}" ${o.rot?`transform="rotate(${o.rot} ${x.toFixed(2)} ${y.toFixed(2)})"`:''} ${o.edit?`data-edit="${o.edit}"`:''}>${esc(txt)}</text>`;
+  const out=[];
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${esc(FF)}">`);
+  // defs
+  let defs=`<clipPath id="pc"><rect x="${left-c.barW}" y="${top-1}" width="${plotW+2*c.barW}" height="${plotH+1+c.axisW}"/></clipPath>`;
+  D.ser.forEach((s,i)=>{const st=c.ss[skey(D.serKind,s)];const sp=Math.max(4,3+c.borderW*2);
+    defs+=`<pattern id="hp${i}" patternUnits="userSpaceOnUse" width="${sp}" height="${sp}" patternTransform="rotate(45)"><rect width="${sp}" height="${sp}" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="${sp}" stroke="${st.color}" stroke-width="${Math.max(1.2,sp*0.38)}"/></pattern>`});
+  out.push(`<defs>${defs}</defs>`);
+  if(c.bg==='white')out.push(`<rect width="${W}" height="${H}" fill="#ffffff"/>`);
+  if(c.title)out.push(T(left+plotW/2,14+c.titleSize,c.title,{size:c.titleSize,bold:c.titleBold,edit:'title'}));
+  // reference line
+  const refV=(c.value==='fc'||c.value==='rel')?1:0;
+  const dash={solid:'',dash:'6 4',dot:'1.5 3'}[c.refDash];
+  const refIn=log?(refV>0&&refV>=yMin&&refV<=yMax):(refV>=yMin&&refV<=yMax);
+  // bars
+  const fillOf=(st,i)=>st.fill==='solid'?st.color:st.fill==='hatch'?`url(#hp${i})`:(c.bg==='white'?'#ffffff':'none');
+  const strokeOf=st=>c.borderMode==='series'?(st.fill==='solid'?darker(st.color):st.color):c.borderColor;
+  const bx=(ci,si)=>left+c.edgePad+ci*(groupW+c.groupGap)+si*(c.barW+c.barGap);
+  let bars='',errs='',pts='';
+  const yb=Y(baseV);
+  cells.forEach((row,ci)=>row.forEach((v,si)=>{if(!v)return;const st=c.ss[skey(D.serKind,D.ser[si])];const x=bx(ci,si);
+    if(log&&v.v<=0)return;const yv=Y(v.v);const y0=Math.min(yv,yb),h=Math.abs(yb-yv);
+    bars+=`<rect x="${x.toFixed(2)}" y="${y0.toFixed(2)}" width="${c.barW}" height="${h.toFixed(2)}" fill="${fillOf(st,si)}" fill-opacity="${st.fill==='solid'?c.fillOpacity:1}" stroke="${c.borderW>0?strokeOf(st):'none'}" stroke-width="${c.borderW}" data-edit="ser:${si}"/>`;
+    const cx=x+c.barW/2,cap=c.barW*c.capW/2;
+    if(c.errMode!=='none'){const up=v.v>=baseV;const ends=c.errDir==='both'?[v.lo,v.hi]:[up?v.hi:v.lo];
+      ends.forEach(e=>{if(!isFinite(e)||(log&&e<=0))return;const ye=Y(e);errs+=`<line x1="${cx.toFixed(2)}" y1="${yv.toFixed(2)}" x2="${cx.toFixed(2)}" y2="${ye.toFixed(2)}"/>`;if(cap>0)errs+=`<line x1="${(cx-cap).toFixed(2)}" y1="${ye.toFixed(2)}" x2="${(cx+cap).toFixed(2)}" y2="${ye.toFixed(2)}"/>`})}
+    if(c.showPoints&&v.pts.length){const n=v.pts.length,span=c.jitter*c.barW;const pf=c.ptFill==='series'?st.color:c.ptFill;
+      v.pts.forEach((p,k)=>{if(!isFinite(p)||(log&&p<=0))return;const px=cx+(n>1?(k/(n-1)-.5)*span:0),py=Y(p),r=c.ptSize;
+        const a=`fill="${pf}" stroke="${c.ptStroke}" stroke-width="${c.ptStrokeW}"`;
+        if(c.ptShape==='circle')pts+=`<circle cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="${r}" ${a}/>`;
+        else if(c.ptShape==='square')pts+=`<rect x="${(px-r).toFixed(2)}" y="${(py-r).toFixed(2)}" width="${2*r}" height="${2*r}" ${a}/>`;
+        else if(c.ptShape==='diamond')pts+=`<path d="M${px} ${py-r*1.3}L${px+r*1.3} ${py}L${px} ${py+r*1.3}L${px-r*1.3} ${py}Z" ${a}/>`;
+        else pts+=`<path d="M${px} ${py-r*1.25}L${px+r*1.15} ${py+r*.85}L${px-r*1.15} ${py+r*.85}Z" ${a}/>`})}
+  }));
+  out.push(`<g clip-path="url(#pc)">`);
+  if(c.refLine&&refIn&&!(c.refLine&&refV===baseV&&!log&&yMin===0&&refV===0))out.push(`<line x1="${left}" x2="${pR}" y1="${Y(refV).toFixed(2)}" y2="${Y(refV).toFixed(2)}" stroke="${c.refColor}" stroke-width="${c.refW}" ${dash?`stroke-dasharray="${dash}"`:''} data-edit="refLine"/>`);
+  out.push(bars,`<g stroke="${c.errColor}" stroke-width="${c.errW}" stroke-linecap="butt" data-edit="errW">${errs}</g>`,`<g data-edit="ptSize">${pts}</g></g>`);
+  // axes
+  const aw=c.axisW,half=aw/2;
+  let ax=`<g stroke="${c.axisColor}" stroke-width="${aw}" fill="none" stroke-linecap="square">`;
+  ax+=`<line x1="${left}" y1="${top}" x2="${left}" y2="${pB}" data-edit="axisW"/>`;
+  const xAxisY=(!log&&yMin<0&&yMax>0)?Y(0):pB;
+  ax+=`<line x1="${left}" y1="${xAxisY.toFixed(2)}" x2="${pR}" y2="${xAxisY.toFixed(2)}" data-edit="axisW"/>`;
+  ticks.forEach(t=>{const y=Y(t).toFixed(2);if(c.tickLen>0)ax+=`<line x1="${c.tickDir==='out'?left-c.tickLen:left}" y1="${y}" x2="${c.tickDir==='out'?left:left+c.tickLen}" y2="${y}" stroke-linecap="butt"/>`});
+  ax+='</g>';out.push(ax);
+  ticks.forEach((t,i)=>out.push(T(left-tOut-6,Y(t),tickLabels[i],{size:c.tickSize,anchor:'end',db:'central',edit:'tickSize'})));
+  // y title
+  if(yLines.length){const n=yLines.length;const x0=left-tOut-6-tickLW-8-(n-1)*yLH-c.yTitleSize*0.22;const yc=top+plotH/2;
+    out.push(`<text x="${x0.toFixed(2)}" y="${yc.toFixed(2)}" font-size="${c.yTitleSize}" ${c.axisTitleBold?'font-weight="bold"':''} text-anchor="middle" fill="${tc}" transform="rotate(-90 ${x0.toFixed(2)} ${yc.toFixed(2)})" data-edit="yTitle">${yLines.map((l,i)=>`<tspan x="${x0.toFixed(2)}" dy="${i?yLH:0}">${esc(l)}</tspan>`).join('')}</text>`)}
+  // x labels
+  D.cats.forEach((cat,ci)=>{const cx=left+c.edgePad+ci*(groupW+c.groupGap)+groupW/2;const y=pB+8+(c.xRot?0:0);
+    if(!c.xRot)out.push(T(cx,y+c.xTickSize*0.82,cat,{size:c.xTickSize,bold:c.xTickBold,ital:itCat,edit:'xTickSize'}));
+    else out.push(T(cx,y+c.xTickSize*0.35,cat,{size:c.xTickSize,bold:c.xTickBold,ital:itCat,anchor:'end',db:'central',rot:-c.xRot,edit:'xTickSize'}))});
+  if(c.xTitle)out.push(T(left+plotW/2,pB+10+xLabH+8+c.xTitleSize,c.xTitle,{size:c.xTitleSize,bold:c.axisTitleBold,edit:'xTitle'}));
+  // legend
+  if(c.legend!=='none'){
+    const item=(x,y,i)=>{const st=c.ss[skey(D.serKind,D.ser[i])];const b=c.legendBox;
+      return `<rect x="${x}" y="${(y-b/2).toFixed(2)}" width="${b}" height="${b}" fill="${fillOf(st,i)}" fill-opacity="${st.fill==='solid'?c.fillOpacity:1}" stroke="${c.borderW>0?strokeOf(st):'none'}" stroke-width="${Math.min(c.borderW,2)}" data-edit="ser:${i}"/>`+T(x+b+8,y,D.ser[i],{size:c.legendSize,anchor:'start',db:'central',ital:itSer,edit:'legendSize'})};
+    if(c.legend==='right'||c.legend==='inside'){const lx=c.legend==='right'?pR+22:pR-legW-10,ly=top+(c.legend==='right'?legItemH/2+4:legItemH/2+6);
+      D.ser.forEach((s,i)=>out.push(item(lx,ly+i*legItemH,i)))}
+    else if(c.legend==='top'){const ws=legNames.map(w=>c.legendBox+8+w+18);const tot=ws.reduce((a,b)=>a+b,0)-18;let x=left+plotW/2-tot/2;const y=14+titleH+legItemH/2;
+      D.ser.forEach((s,i)=>{out.push(item(x,y,i));x+=ws[i]})}
+  }
+  out.push('</svg>');
+  return {svg:out.join(''),W,H};
+}
+let chartRAF=0;
+function scheduleChart(){cancelAnimationFrame(chartRAF);chartRAF=requestAnimationFrame(drawChart)}
+function drawChart(){const host=$('#chartHost');const r=buildSVG();if(!r){host.innerHTML='<div class="empty-s">No data to plot</div>';return}
+  host.innerHTML=r.svg;const svg=host.querySelector('svg');svg.style.width=(r.W*S.zoom)+'px';svg.style.height=(r.H*S.zoom)+'px';
+  host.classList.toggle('transp',S.cfg.bg!=='white')}
+$('#chartHost').addEventListener('click',e=>{const el=e.target.closest('[data-edit]');if(!el)return;const k=el.dataset.edit;
+  if(k.startsWith('ser:')){openSec('series');const row=$$('#inspector .ser-row')[+k.slice(4)];if(row){row.scrollIntoView({block:'center',behavior:'smooth'});row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),900)}return}
+  const secOf={title:'text',yTitle:'text',xTitle:'text',tickSize:'text',xTickSize:'text',legendSize:'legend',errW:'err',ptSize:'err',axisW:'axes',refLine:'axes'}[k];
+  if(secOf){openSec(secOf);const inp=$(`#inspector [data-k="${k}"]`);if(inp){const row=inp.closest('.ctl');row.scrollIntoView({block:'center',behavior:'smooth'});row.classList.remove('ctl-flash');void row.offsetWidth;row.classList.add('ctl-flash');if(inp.type==='text'||inp.tagName==='TEXTAREA')setTimeout(()=>{inp.focus();inp.select()},250)}}});
+function openSec(id){const d=$(`#inspector details[data-sec="${id}"]`);if(d&&!d.open){d.open=true;openSecs.add(id)}}
+
+/* ====================== inspector ====================== */
+const SECS=[
+ {id:'data',title:'Data',icon:'▦',items:[
+  {k:'value',t:'select',l:'Plotted value',o:[['fc','Fold change (2^-ΔΔCt)'],['log2fc','log2 fold change'],['rel','Relative expr. (2^-ΔCt)'],['dct','ΔCt'],['ddct','ΔΔCt']],re:1},
+  {k:'groupBy',t:'seg',l:'Group bars by',o:[['gene','Gene'],['sample','Sample']],re:1},
+  {k:'errMode',t:'seg',l:'Error bars',o:[['minmax','Min–Max'],['none','None']]},
+  {k:'errDir',t:'seg',l:'Direction',o:[['both','Both'],['up','One‑sided']]},
+  {k:'showPoints',t:'toggle',l:'Replicate dots'}]},
+ {id:'text',title:'Text & fonts',icon:'Aa',items:[
+  {k:'font',t:'select',l:'Font family',o:FONTS},
+  {k:'textColor',t:'color',l:'Text color'},
+  {k:'title',t:'text',l:'Title'},
+  {k:'titleSize',t:'range',l:'Title size',min:8,max:40,step:1},
+  {k:'titleBold',t:'toggle',l:'Bold title'},
+  {k:'yTitle',t:'area',l:'Y axis title'},
+  {k:'yTitleSize',t:'range',l:'Y title size',min:6,max:36,step:.5},
+  {k:'xTitle',t:'text',l:'X axis title'},
+  {k:'xTitleSize',t:'range',l:'X title size',min:6,max:36,step:.5},
+  {k:'axisTitleBold',t:'toggle',l:'Bold axis titles'},
+  {k:'tickSize',t:'range',l:'Y tick labels',min:6,max:30,step:.5},
+  {k:'xTickSize',t:'range',l:'X labels',min:6,max:30,step:.5},
+  {k:'xTickBold',t:'toggle',l:'Bold X labels'},
+  {k:'xRot',t:'seg',l:'X label angle',o:[[0,'0°'],[30,'30°'],[45,'45°'],[90,'90°']]},
+  {k:'italicGenes',t:'toggle',l:'Italic gene names'}]},
+ {id:'bars',title:'Bars & spacing',icon:'▮',items:[
+  {k:'barW',t:'range',l:'Bar width',min:4,max:100,step:1},
+  {k:'barGap',t:'range',l:'Gap in cluster',min:0,max:40,step:1},
+  {k:'groupGap',t:'range',l:'Gap between clusters',min:0,max:160,step:1},
+  {k:'edgePad',t:'range',l:'Edge padding',min:0,max:80,step:1},
+  {k:'borderW',t:'range',l:'Border width',min:0,max:6,step:.25},
+  {k:'borderMode',t:'seg',l:'Border color',o:[['custom','Custom'],['series','Match bar']],re:1},
+  {k:'borderColor',t:'color',l:'Custom border',dis:c=>c.borderMode!=='custom'},
+  {k:'fillOpacity',t:'range',l:'Fill opacity',min:0,max:1,step:.05}]},
+ {id:'series',title:'Colors & fills',icon:'◐',custom:'series'},
+ {id:'err',title:'Error bars & dots',icon:'⟂',items:[
+  {k:'errW',t:'range',l:'Error line width',min:.25,max:5,step:.25},
+  {k:'capW',t:'range',l:'Cap width (×bar)',min:0,max:1.2,step:.05},
+  {k:'errColor',t:'color',l:'Error color'},
+  {k:'ptShape',t:'seg',l:'Dot shape',o:[['circle','●'],['square','■'],['diamond','◆'],['triangle','▲']]},
+  {k:'ptSize',t:'range',l:'Dot size',min:1,max:10,step:.2},
+  {k:'ptFill',t:'select',l:'Dot fill',o:[['#ffffff','White'],['#000000','Black'],['series','Bar color'],['none','Hollow']]},
+  {k:'ptStroke',t:'color',l:'Dot outline'},
+  {k:'ptStrokeW',t:'range',l:'Outline width',min:0,max:3,step:.1},
+  {k:'jitter',t:'range',l:'Dot spread',min:0,max:1,step:.05}]},
+ {id:'axes',title:'Axes & scale',icon:'⊾',items:[
+  {k:'plotH',t:'range',l:'Plot height',min:120,max:800,step:5},
+  {k:'axisW',t:'range',l:'Axis width',min:.25,max:5,step:.25},
+  {k:'axisColor',t:'color',l:'Axis color'},
+  {k:'tickLen',t:'range',l:'Tick length',min:0,max:16,step:.5},
+  {k:'tickDir',t:'seg',l:'Ticks',o:[['out','Outside'],['in','Inside']]},
+  {k:'yScale',t:'seg',l:'Y scale',o:[['linear','Linear'],['log2','Log₂'],['log10','Log₁₀']],re:1},
+  {k:'yMinAuto',t:'toggle',l:'Auto Y min'},
+  {k:'yMin',t:'number',l:'Y min',dis:c=>c.yMinAuto},
+  {k:'yMaxAuto',t:'toggle',l:'Auto Y max'},
+  {k:'yMax',t:'number',l:'Y max',dis:c=>c.yMaxAuto},
+  {k:'yStepAuto',t:'toggle',l:'Auto tick step'},
+  {k:'yStep',t:'number',l:'Tick step',dis:c=>c.yStepAuto||c.yScale!=='linear'},
+  {k:'refLine',t:'toggle',l:'Reference line'},
+  {k:'refColor',t:'color',l:'Ref. line color'},
+  {k:'refDash',t:'seg',l:'Ref. line style',o:[['solid','Solid'],['dash','Dashed'],['dot','Dotted']]},
+  {k:'refW',t:'range',l:'Ref. line width',min:.25,max:4,step:.25}]},
+ {id:'legend',title:'Legend',icon:'☰',items:[
+  {k:'legend',t:'seg',l:'Position',o:[['right','Right'],['top','Top'],['inside','Inside'],['none','Off']]},
+  {k:'legendSize',t:'range',l:'Font size',min:6,max:30,step:.5},
+  {k:'legendBox',t:'range',l:'Swatch size',min:4,max:30,step:1}]},
+ {id:'export',title:'Export',icon:'⇩',custom:'export'}];
+const DEF={};SECS.forEach(s=>(s.items||[]).forEach(d=>DEF[d.k]=d));
+const openSecs=new Set(['data','text']);
+function ctlHTML(d){const c=S.cfg,v=c[d.k],dis=d.dis&&d.dis(c)?'disabled':'';
+  const wrap=(inner,stack)=>`<div class="ctl ${stack?'stack':''}"><label>${d.l}</label>${inner}</div>`;
+  switch(d.t){
+    case 'select':return wrap(`<select data-k="${d.k}" ${dis}>${d.o.map(o=>{const [val,lab]=Array.isArray(o)?o:[o,o];return `<option value="${esc(val)}" ${String(val)===String(v)?'selected':''}>${esc(lab)}</option>`}).join('')}</select>`);
+    case 'seg':return wrap(`<div class="seg sm full" data-k="${d.k}">${d.o.map(([val,lab])=>`<button data-v="${esc(val)}" class="${String(val)===String(v)?'on':''}">${esc(lab)}</button>`).join('')}</div>`);
+    case 'toggle':return wrap(`<label class="switch"><input type="checkbox" data-k="${d.k}" ${v?'checked':''}><span></span></label>`);
+    case 'range':return wrap(`<div class="rng"><input type="range" data-k="${d.k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${v}"><input type="number" data-k="${d.k}" min="${d.min}" step="${d.step}" value="${v}"></div>`);
+    case 'number':return wrap(`<input type="number" step="any" data-k="${d.k}" value="${v}" ${dis}>`);
+    case 'color':return wrap(`<div class="colr"><input type="color" data-k="${d.k}" value="${v}" ${dis}><code>${v}</code></div>`);
+    case 'text':return wrap(`<input type="text" data-k="${d.k}" value="${esc(v)}" placeholder="(none)">`);
+    case 'area':return wrap(`<textarea data-k="${d.k}" rows="2" placeholder="Use Enter for a new line">${esc(v)}</textarea>`,true);}}
+function seriesHTML(){const D=chartData();ensureSeries(D);const c=S.cfg;const itS=c.italicGenes&&D.serKind==='gene';
+  return `<div class="palrow"><select id="palSel">${Object.keys(PALETTES).map(p=>`<option ${p===c.palette?'selected':''}>${p}</option>`).join('')}</select><button class="btn sm" id="palApply">Apply</button></div>
+  <div class="swatches" id="palSw">${PALETTES[c.palette].map(x=>`<i style="background:${x};border:1px solid rgba(0,0,0,.12)"></i>`).join('')}</div>
+  ${D.ser.map((s,i)=>{const k=skey(D.serKind,s),st=c.ss[k];return `<div class="ser-row"><input type="color" data-sc="${esc(k)}" value="${st.color}"><span class="sn" style="${itS?'font-style:italic':''}">${esc(s)}</span><select data-sf="${esc(k)}">${[['solid','Solid'],['hollow','Hollow'],['hatch','Hatched']].map(([a,b])=>`<option value="${a}" ${st.fill===a?'selected':''}>${b}</option>`).join('')}</select></div>`}).join('')}
+  <div class="ctl" style="margin-top:10px"><label>Apply to all</label><div class="seg sm full" id="fillAll"><button data-v="solid">Solid</button><button data-v="hollow">Hollow</button><button data-v="hatch">Hatched</button></div></div>`}
+function exportHTML(){const c=S.cfg;return `
+  ${ctlHTML({k:'bg',t:'seg',l:'Background',o:[['white','White'],['transparent','Transparent']]})}
+  ${ctlHTML({k:'pngScale',t:'seg',l:'PNG resolution',o:[[2,'2×'],[3,'3×'],[4,'4×'],[6,'6×'],[8,'8×']]})}
+  <p class="desc" style="margin:0 0 12px">4× ≈ 300 dpi at the on‑screen size. SVG is vector and opens in Illustrator / Inkscape / PowerPoint.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn sm primary" data-act="png">PNG</button><button class="btn sm" data-act="svg">SVG</button><button class="btn sm" data-act="copy">Copy image</button><button class="btn sm" data-act="reset">Reset style</button></div>`}
+DEF.bg={k:'bg',t:'seg'};DEF.pngScale={k:'pngScale',t:'seg'};
+function renderInspector(){const ins=$('#inspector');const st=ins.scrollTop;
+  ins.innerHTML=SECS.map(s=>`<details class="sec" data-sec="${s.id}" ${openSecs.has(s.id)?'open':''}><summary><span class="si">${s.icon}</span>${s.title}</summary><div class="body">${s.custom==='series'?seriesHTML():s.custom==='export'?exportHTML():s.items.map(ctlHTML).join('')}</div></details>`).join('');
+  ins.scrollTop=st}
+const ins=$('#inspector');
+ins.addEventListener('toggle',e=>{const d=e.target;if(d.dataset?.sec){d.open?openSecs.add(d.dataset.sec):openSecs.delete(d.dataset.sec)}},true);
+function setCfg(k,v,rerender){const c=S.cfg;const old=c[k];c[k]=v;
+  if(k==='yTitle')c.yTitleAuto=false;
+  if(k==='value'&&c.yTitleAuto)c.yTitle=YT[v];
+  if(k==='value'&&(v==='dct'||v==='ddct'||v==='log2fc')&&c.yScale!=='linear')c.yScale='linear';
+  if(k==='groupBy'&&S.A)S.A.groupBy=v;
+  saveStyle();scheduleChart();if(rerender||(DEF[k]&&DEF[k].re))renderInspector()}
+ins.addEventListener('input',e=>{const el=e.target;
+  if(el.dataset.sc){S.cfg.ss[el.dataset.sc].color=el.value;scheduleChart();return}
+  const k=el.dataset.k;if(!k)return;let v;
+  if(el.type==='checkbox')v=el.checked;else if(typeof S.cfg[k]==='number'){v=parseFloat(el.value);if(!isFinite(v))return}else v=el.value;
+  if(el.type==='range'||el.type==='number'){const sib=el.parentElement.querySelector(`input[data-k="${k}"]:not([type="${el.type}"])`);if(sib)sib.value=v}
+  if(el.type==='color'){const cd=el.parentElement.querySelector('code');if(cd)cd.textContent=v}
+  setCfg(k,v,el.type==='checkbox')});
+ins.addEventListener('change',e=>{const el=e.target;
+  if(el.dataset.sf){S.cfg.ss[el.dataset.sf].fill=el.value;scheduleChart();return}
+  if(el.id==='palSel'){$('#palSw').innerHTML=PALETTES[el.value].map(x=>`<i style="background:${x};border:1px solid rgba(0,0,0,.12)"></i>`).join('')}});
+ins.addEventListener('click',e=>{
+  const sb=e.target.closest('.seg[data-k] button');
+  if(sb){const k=sb.parentElement.dataset.k;const raw=sb.dataset.v;const v=typeof S.cfg[k]==='number'?parseFloat(raw):raw;$$('button',sb.parentElement).forEach(b=>b.classList.toggle('on',b===sb));setCfg(k,v,DEF[k]?.re);return}
+  if(e.target.id==='palApply'){applyPalette($('#palSel').value);renderInspector();scheduleChart();return}
+  const fa=e.target.closest('#fillAll button');if(fa){const D=chartData();D.ser.forEach(s=>S.cfg.ss[skey(D.serKind,s)].fill=fa.dataset.v);renderInspector();scheduleChart();return}
+  const act=e.target.closest('[data-act]');if(act){const a=act.dataset.act;if(a==='png')exportPNG();if(a==='svg')exportSVG();if(a==='copy')copyPNG();
+    if(a==='reset'){const ss=S.cfg.ss,t=S.cfg.title,g=S.cfg.groupBy;ls.set('qs.style',null);S.cfg=defaultCfg();S.cfg.ss=ss;S.cfg.title=t;S.cfg.groupBy=g;renderInspector();scheduleChart();toast('Style reset')}}});
+
+/* ---------- export ---------- */
+function fileBase(){return (S.file?.exp||'qpcr').replace(/[^\w\-]+/g,'_')+'_'+S.cfg.value}
+function svgText(){const r=buildSVG();return r&&r.svg.replace(/ data-edit="[^"]*"/g,'')}
+function exportSVG(){const s=svgText();if(s)download(fileBase()+'.svg','<?xml version="1.0" encoding="UTF-8"?>\n'+s,'image/svg+xml')}
+function renderPNG(){return new Promise((res,rej)=>{const r=buildSVG();if(!r)return rej();const sc=S.cfg.pngScale||4;
+  const img=new Image();img.onload=()=>{const cv=document.createElement('canvas');cv.width=Math.round(r.W*sc);cv.height=Math.round(r.H*sc);const x=cv.getContext('2d');
+    if(S.cfg.bg==='white'){x.fillStyle='#fff';x.fillRect(0,0,cv.width,cv.height)}x.drawImage(img,0,0,cv.width,cv.height);cv.toBlob(b=>res(b),'image/png')};
+  img.onerror=rej;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(r.svg.replace(/ data-edit="[^"]*"/g,''))})}
+async function exportPNG(){try{const b=await renderPNG();download(fileBase()+`_${S.cfg.pngScale}x.png`,b)}catch(e){toast('PNG export failed','err')}}
+async function copyPNG(){try{const b=await renderPNG();if(NATIVE){NATIVE.copyImage.postMessage({data:await blob64(b)});toast('Figure copied to clipboard','ok');return}await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);toast('Figure copied to clipboard','ok')}catch(e){toast('Clipboard not available here — use Download PNG','err')}}
+$('#dlPng').onclick=exportPNG;$('#dlSvg').onclick=exportSVG;
+$('#zoom').oninput=e=>{S.zoom=e.target.value/100;$('#zoomTxt').textContent=e.target.value+'%';scheduleChart()};
+
+/* ====================== results ====================== */
+$('#backAnalysis').onclick=()=>setStep(2);
+$('#resTabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;$$('#resTabs button').forEach(x=>x.classList.toggle('on',x===b));
+  $('#tabGraph').style.display=b.dataset.t==='graph'?'':'none';$('#tabTables').style.display=b.dataset.t==='tables'?'':'none'};
+function renderResults(){
+  const R=S.R,A=S.A;
+  const tg=uniq(R.rows.map(r=>r.gene)),sm=uniq(R.rows.map(r=>r.sample));
+  $('#resSub').innerHTML=`${tg.length} target gene${tg.length>1?'s':''} × ${sm.length} sample${sm.length>1?'s':''} · reference: <i>${A.refs.filter(r=>r.on).map(r=>esc(r.name)).join(' + ')}</i> · ${A.mode==='single'?`calibrator: <b>${esc(A.cal)}</b>`:'per‑sample calibrators'}`;
+  $('#resWarn').innerHTML=R.warnings.length?`<details class="notice warn warnlist" style="display:block;margin:0 0 16px"><summary style="cursor:pointer;font-weight:600">⚠ ${R.warnings.length} quality note${R.warnings.length>1?'s':''} — click to view</summary><ul style="margin:8px 0 2px;padding-left:20px">${R.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></details>`:'';
+  renderInspector();drawChart();renderTables();
+}
+const TBL={};
+function tableCard(id,title,desc,head,rows,fmt){TBL[id]={head,rows,title};
+  return `<div class="card tcard"><div class="th"><div><h4>${title}</h4><p>${desc}</p></div><span class="grow"></span><button class="btn sm" data-copy="${id}">Copy for Excel / Prism</button><button class="btn sm" data-csv="${id}">CSV</button></div>
+  <div class="tscroll"><table class="tbl"><thead><tr>${head.map((h,i)=>`<th class="${fmt[i]?'num':''}">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,i)=>`<td class="${fmt[i]?'num':''}">${fmt[i]?fmt[i](v):(v&&v.html)?v.html:esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`}
+function renderTables(){const R=S.R,A=S.A;
+  const refs=A.refs.filter(r=>r.on).map(r=>r.name),targets=A.targets.filter(t=>t.on).map(t=>t.name),samples=A.samples.filter(s=>s.on).map(s=>s.name);
+  const ctRows=[];
+  samples.forEach(s=>[...refs,...targets].forEach(g=>{const gs=S.groups.filter(x=>x.sample===s&&x.gene===g);if(!gs.length)return;const ws=gs.flatMap(x=>x.wells);const st=wellStats(ws);
+    ctRows.push([s,g+(refs.includes(g)?' (ref)':''),ws.join(' '),{html:ws.map(p=>{const w=S.wells[p];return w.excluded||!isFinite(w.cp)?`<s class="muted">${f2(w.cp)}</s>`:f2(w.cp)}).join(', '),text:ws.map(p=>f2(S.wells[p].cp)+(S.wells[p].excluded?'*':'')).join(', ')},st.n,st.mean,st.sd,st.sd>0.5?{html:'<span class="flag">⚠ SD &gt; 0.5</span>',text:'SD>0.5'}:''])}));
+  const dRows=R.rows.map(r=>[r.sample,r.gene,r.ctT,r.sdT,r.ctH,r.sdH,r.dct,r.sdD,r.rel]);
+  const fRows=R.rows.map(r=>[r.sample,r.gene,r.cal,r.dctC,r.ddct,r.sdDD,r.fc,r.fcLo,r.fcHi,r.fc-r.fcLo,r.fcHi-r.fc]);
+  const N2=v=>f2(v),N3=v=>f3(v),N4=v=>f4(v);
+  $('#tabTables').innerHTML=
+    tableCard('fc','Fold change (2<sup>−ΔΔCt</sup>)','ΔΔCt = ΔCt(sample) − ΔCt(calibrator). Min/Max = 2^−(ΔΔCt ± SD). Error columns are the distances from FC, ready for asymmetric error bars.',
+      ['Sample','Gene','Calibrator','ΔCt cal.','ΔΔCt','SD','Fold change','FC min','FC max','Err −','Err +'],fRows,[0,0,0,N3,N3,N3,N4,N4,N4,N4,N4])+
+    tableCard('dct','ΔCt','ΔCt = mean Ct(target) − mean Ct(reference) of the same sample. SD propagated: √(SD_t² + SD_r²).',
+      ['Sample','Gene','Ct target','SD','Ct ref.','SD','ΔCt','SD ΔCt','2^−ΔCt'],dRows,[0,0,N2,N3,N2,N3,N3,N3,N4])+
+    tableCard('ct','Raw Cp summary','Pooled technical replicates per sample × gene. Struck‑through values are excluded or undetermined.',
+      ['Sample','Gene','Wells','Cp values','n','Mean Cp','SD',''],ctRows,[0,0,0,0,0,N2,N3,0])+
+    `<div style="display:flex;justify-content:flex-end"><button class="btn primary" id="csvAll">Download all tables (CSV)</button></div>`;
+}
+function tableText(id,sep){const t=TBL[id];const cell=v=>{if(v&&typeof v==='object')return v.text;if(typeof v==='number')return isFinite(v)?String(+v.toFixed(5)):'';const s=String(v??'');return sep===','&&/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  const strip=h=>h.replace(/<[^>]+>/g,'');return [t.head.map(strip).map(cell).join(sep),...t.rows.map(r=>r.map(cell).join(sep))].join('\n')}
+$('#tabTables').addEventListener('click',async e=>{const c=e.target.closest('[data-copy]'),v=e.target.closest('[data-csv]');
+  if(c){try{await copyTextAny(tableText(c.dataset.copy,'\t'));toast('Table copied — paste into Excel or Prism','ok')}catch(err){toast('Clipboard not available','err')}}
+  if(v)download(`${fileBase()}_${v.dataset.csv}.csv`,tableText(v.dataset.csv,','),'text/csv');
+  if(e.target.id==='csvAll')download(`${(S.file?.exp||'qpcr')}_results.csv`,['fc','dct','ct'].map(id=>TBL[id].title.replace(/<[^>]+>/g,'')+'\n'+tableText(id,',')).join('\n\n'),'text/csv')});
+</script>
+</body>
+</html>
